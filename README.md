@@ -99,7 +99,7 @@ Here are 3 essential card configurations for displaying disaster information:
 
 ```yaml
 type: entity
-entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
+entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao
 name: 気象警報・注意報
 icon: mdi:alert
 ```
@@ -111,11 +111,11 @@ icon: mdi:alert
 ```yaml
 type: conditional
 conditions:
-  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
+  - entity: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao
     state: "on"
 card:
   type: entity
-  entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
+  entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao
   name: ⚠️ 気象警報発表中
   icon: mdi:alert
 ```
@@ -128,16 +128,16 @@ card:
 type: entities
 title: 防災情報詳細
 entities:
-  - entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
+  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao
     name: 気象警報・注意報
     icon: mdi:weather-cloudy-alert
-  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao
+  - entity: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao
     name: 特別警報
     icon: mdi:alert-octagon
-  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_jing_bao
+  - entity: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao
     name: 警報
     icon: mdi:alert
-  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
+  - entity: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao
     name: 注意報
     icon: mdi:alert-outline
 ```
@@ -150,7 +150,7 @@ automation:
   - alias: "Flash lights on special warning"
     trigger:
       - platform: state
-        entity_id: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao
+        entity_id: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao
         to: 'on'
     action:
       - service: light.turn_on
@@ -160,7 +160,7 @@ automation:
           effect: colorloop
       - service: notify.mobile_app
         data:
-          message: "Special weather warning issued for Ishikawa!"
+          message: "Special weather warning issued for Kitakyushu!"
 ```
 
 ### Advisory Alert
@@ -169,12 +169,12 @@ automation:
   - alias: "Advisory notification"
     trigger:
       - platform: state
-        entity_id: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
+        entity_id: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao
         to: 'on'
     action:
       - service: notify.family
         data:
-          message: "Weather advisory issued: {{ states('sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao') }}"
+          message: "Weather advisory issued: {{ states('sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao') }}"
 ```
 
 ## Data Source
@@ -243,11 +243,11 @@ If you're having issues with card display, try these standard Home Assistant car
 4. **Verify Sensors**: Check that sensors are created and updating
 
 ### Common Entity Name Patterns
-Entity names are generated based on your configured area (example for Ishikawa Prefecture):
-- `sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao` - Weather warnings
-- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_jing_bao` - Warning status
-- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao` - Special warning status
-- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao` - Advisory status
+Entity names are generated based on your configured area (example for Kitakyushu City, Fukuoka Prefecture):
+- `sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao` - Weather warnings
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao` - Warning status
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao` - Special warning status
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao` - Advisory status
 
 Note: Entity names are currently generated in transliterated form. Check your actual entity names in Developer Tools → States.
 
