@@ -2,101 +2,108 @@
 
 A Home Assistant custom integration that provides real-time disaster information for Japan, including weather warnings, earthquake data, and tsunami alerts from the Japan Meteorological Agency (JMA).
 
-## Features
+This integration is specifically designed for Japanese users and provides disaster information in Japanese. The integration uses official JMA XML data and supports all prefectures and municipalities in Japan.
 
-- **Weather Warnings & Advisories**: Get alerts for heavy rain, strong winds, snow, and other weather-related warnings
-- **Earthquake Information**: Real-time earthquake data including intensity, epicenter, and magnitude
-- **Tsunami Information**: Tsunami warnings, advisories, and forecasts
-- **Landslide Warnings**: Soil disaster warning information
-- **Weather Forecasts**: Local weather prediction data
-- **Multi-Region Support**: Monitor multiple areas (home, workplace, family locations)
-- **Built-in Dashboard Card**: Conditional card that only shows when alerts are active
-- **Home Assistant Automation**: Trigger automations based on disaster alerts
-- **HACS Compatible**: Easy installation through Home Assistant Community Store
+---
 
-## Installation
+# 気象庁防災情報 Home Assistant インテグレーション
 
-### HACS (Recommended)
+日本の気象庁が提供する防災情報XMLフォーマットを使用して、リアルタイムで気象警報、地震情報、津波情報などをHome Assistantに取り込むカスタムインテグレーションです。
 
-1. Open HACS in your Home Assistant instance
-2. Click on "Integrations"
-3. Click the three dots in the top right corner and select "Custom repositories"
-4. Add this repository: `https://github.com/heartstatnet/ha-disasterinformation`
-5. Select "Integration" as the category
-6. Click "Add"
-7. Search for "気象庁防災情報" or "JMA Disaster Information"
-8. Click "Download"
-9. Restart Home Assistant
+## 主な機能
 
-### Manual Installation
-
-1. Download the latest release from the [releases page](https://github.com/heartstatnet/ha-disasterinformation/releases)
-2. Copy the `custom_components/disasterinformation` folder to your Home Assistant `custom_components` directory
-3. Restart Home Assistant
-
-## Configuration
-
-1. Go to **Settings** → **Devices & Services** → **Add Integration**
-2. Search for "気象庁防災情報" or "JMA Disaster Information"
-3. Follow the configuration steps:
-   - **Select Prefecture**: Choose your prefecture from the dropdown
-   - **Select Municipality**: Choose your city/ward/town from the dropdown
-   - **Information Types**: Select which types of disaster information to monitor:
-     - Weather warnings/advisories/special warnings
-     - Earthquake information
-     - Tsunami information
-     - Landslide warnings
-     - Weather forecasts
-   - **Update Interval**: Set how often to check for updates (minimum 5 minutes, default 10 minutes)
-4. Click "Submit" to complete the setup
+- **気象警報・注意報・特別警報**: 大雨、強風、雪などの気象関連警報の取得
+- **地震情報**: 震度、震源地、マグニチュードなどのリアルタイム地震データ
+- **津波情報**: 津波警報・注意報・予報の取得
+- **土砂災害警戒情報**: 土砂災害に関する警戒情報
+- **天気予報**: 地域の天気予報データ
+- **複数地域対応**: 自宅、職場、実家など複数地域の監視
+- **Home Assistantオートメーション**: 防災情報に基づく自動化の実行
+- **HACS対応**: Home Assistant Community Storeから簡単インストール
 
 ![Configuration UI](docs/images/ui.png)
-*Configuration interface showing prefecture and municipality selection*
+*気象庁が提供する防災情報の統合が可能です！*
 
-### Multiple Regions
+## インストール
 
-You can add multiple regions by repeating the configuration process. Each region will create a separate device with its own set of sensors.
+### HACS（推奨）
 
-## Entities
+1. Home AssistantでHACSを開く
+2. 「Integrations」をクリック
+3. 右上の三点メニューから「Custom repositories」を選択
+4. このリポジトリを追加: `https://github.com/heartstatnet/ha-disasterinformation`
+5. カテゴリで「Integration」を選択
+6. 「Add」をクリック
+7. 「気象庁防災情報」で検索
+8. 「Download」をクリック
+9. Home Assistantを再起動
 
-For each configured region, the integration creates a device named `[Municipality] 気象庁防災情報` (e.g., "千代田区 気象庁防災情報") with the following entities:
+### 手動インストール
 
-### Sensor Entities
+1. [リリースページ](https://github.com/heartstatnet/ha-disasterinformation/releases)から最新版をダウンロード
+2. `custom_components/disasterinformation` フォルダをHome Assistantの `custom_components` ディレクトリにコピー
+3. Home Assistantを再起動
 
-#### Weather Warnings (`sensor.[area]_warnings`)
-- **State**: Summary of active warnings/advisories (e.g., "大雨警報 雷注意報", "特別警報(大雨)", "発表なし")
-- **Attributes**:
-  - `headline`: JMA announcement headline
-  - `report_datetime`: Publication datetime
-  - `special_warnings`: List of special warnings
-  - `warnings`: List of warnings
-  - `advisories`: List of advisories
-  - `raw_xml_url`: Source XML URL
+## 設定
 
-#### Earthquake Information (`sensor.[area]_earthquake`)
-- **State**: Maximum seismic intensity observed (e.g., "震度3", "観測なし")
-- **Attributes**:
-  - `report_datetime`: Publication datetime
-  - `event_id`: Earthquake identification ID
-  - `hypocenter`: Epicenter location
-  - `magnitude`: Magnitude
-  - `depth`: Depth
-  - `intensity_map`: Map of observed intensities by region
+1. **設定** → **デバイスとサービス** → **統合を追加** に移動
+2. 「気象庁防災情報」で検索
+3. 設定手順に従って設定:
+   - **都道府県の選択**: ドロップダウンから都道府県を選択
+   - **市区町村の選択**: ドロップダウンから市区町村を選択
+   - **情報種別**: 監視する防災情報の種類を選択:
+     - 気象警報・注意報・特別警報
+     - 地震情報
+     - 津波情報
+     - 土砂災害警戒情報
+     - 天気予報
+   - **更新間隔**: 更新チェックの間隔を設定（最小5分、デフォルト10分）
+4. 「送信」をクリックして設定完了
 
-### Binary Sensor Entities
+### 複数地域の設定
 
-For easier use in automations:
+設定プロセスを繰り返すことで複数地域を追加できます。各地域ごとに独立したデバイスと、それに属するセンサーが作成されます。
 
-- **Special Warning** (`binary_sensor.[area]_special_warning`): ON when any special warning is active
-- **Warning** (`binary_sensor.[area]_warning`): ON when any warning is active
-- **Advisory** (`binary_sensor.[area]_advisory`): ON when any advisory is active
-- **Earthquake Detected** (`binary_sensor.[area]_earthquake_detected`): ON when earthquake above configured intensity is detected (automatically turns OFF after specified time)
+## エンティティ
 
-## Dashboard Cards
+設定された地域ごとに `[市区町村名] 気象庁防災情報`（例：「北九州市 気象庁防災情報」）という名前のデバイスが作成され、以下のエンティティが提供されます：
 
-Here are 3 essential card configurations for displaying disaster information:
+### センサーエンティティ
 
-### 1. Basic Entity Card (推奨)
+#### 気象警報 (`sensor.[地域]_warnings`)
+- **状態**: 発表中の警報・注意報の概要（例：「大雨警報 雷注意報」、「特別警報(大雨)」、「発表なし」）
+- **属性**:
+  - `headline`: 気象庁発表ヘッドライン
+  - `report_datetime`: 発表日時
+  - `special_warnings`: 特別警報のリスト
+  - `warnings`: 警報のリスト
+  - `advisories`: 注意報のリスト
+  - `raw_xml_url`: 参照XMLのURL
+
+#### 地震情報 (`sensor.[地域]_earthquake`)
+- **状態**: 観測された最大震度（例：「震度3」、「観測なし」）
+- **属性**:
+  - `report_datetime`: 発表日時
+  - `event_id`: 地震識別ID
+  - `hypocenter`: 震源地
+  - `magnitude`: マグニチュード
+  - `depth`: 深さ
+  - `intensity_map`: 地域別観測震度マップ
+
+### バイナリセンサーエンティティ
+
+オートメーションでの使用を容易にするため：
+
+- **特別警報** (`binary_sensor.[地域]_special_warning`): 特別警報発表時にON
+- **警報** (`binary_sensor.[地域]_warning`): 警報発表時にON
+- **注意報** (`binary_sensor.[地域]_advisory`): 注意報発表時にON
+- **地震検知** (`binary_sensor.[地域]_earthquake_detected`): 設定震度以上の地震検知時にON（一定時間後に自動OFF）
+
+## ダッシュボードカード
+
+防災情報を表示するための3つの基本カード設定：
+
+### 1. 基本エンティティカード（推奨）
 
 シンプルで確実に動作する基本カードです。
 
@@ -107,7 +114,7 @@ name: 気象警報・注意報
 icon: mdi:alert
 ```
 
-### 2. Alert-Only Card (警報時のみ表示)
+### 2. 警報時のみ表示カード
 
 警報や注意報がある時のみ表示される条件付きカードです。
 
@@ -123,7 +130,7 @@ card:
   icon: mdi:alert
 ```
 
-### 3. Detailed Information Card (詳細情報)
+### 3. 詳細情報カード
 
 すべての防災情報を一覧表示する詳細カードです。
 
@@ -145,12 +152,12 @@ entities:
     icon: mdi:alert-outline
 ```
 
-## Automation Examples
+## オートメーション例
 
-### Flash Lights on Special Warning
+### 特別警報時のライト点滅
 ```yaml
 automation:
-  - alias: "Flash lights on special warning"
+  - alias: "特別警報時ライト点滅"
     trigger:
       - platform: state
         entity_id: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao
@@ -163,13 +170,13 @@ automation:
           effect: colorloop
       - service: notify.mobile_app
         data:
-          message: "Special weather warning issued for Kitakyushu!"
+          message: "北九州市に特別警報が発表されました！"
 ```
 
-### Advisory Alert
+### 注意報通知
 ```yaml
 automation:
-  - alias: "Advisory notification"
+  - alias: "注意報通知"
     trigger:
       - platform: state
         entity_id: binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao
@@ -177,99 +184,49 @@ automation:
     action:
       - service: notify.family
         data:
-          message: "Weather advisory issued: {{ states('sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao') }}"
+          message: "気象注意報が発表されました: {{ states('sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao') }}"
 ```
 
-## Data Source
+## データソース
 
-This integration uses the [Japan Meteorological Agency Disaster Prevention Information XML Format](https://xml.kishou.go.jp/xmlpull.html) as its data source.
+このインテグレーションは[気象庁防災情報XMLフォーマット](https://xml.kishou.go.jp/xmlpull.html)をデータソースとして使用しています。
 
-- **Update Frequency**: Configurable (minimum 5 minutes, default 10 minutes)
-- **Authentication**: Not required (public API)
-- **Format**: JMA XML format
-- **Coverage**: All prefectures and municipalities in Japan
+- **更新頻度**: 設定可能（最小5分、デフォルト10分）
+- **認証**: 不要（公開API）
+- **フォーマット**: JMA XMLフォーマット
+- **対応範囲**: 日本全国の都道府県・市区町村
 
-## Development
+## トラブルシューティング
 
-### Project Structure
-```
-custom_components/disasterinformation/
-├── __init__.py              # Integration entry point
-├── manifest.json            # Integration metadata
-├── config_flow.py          # Configuration UI flow
-├── const.py                # Constants and configuration
-├── sensor.py               # Sensor platform implementation
-├── binary_sensor.py        # Binary sensor platform implementation
-├── api.py                  # JMA XML API client
-└── strings.json            # UI strings
-```
+### エンティティ名パターン
+エンティティ名は設定した地域に基づいて生成されます（福岡県北九州市の例）：
+- `sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao` - 気象警報
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao` - 警報状態
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao` - 特別警報状態
+- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao` - 注意報状態
 
-### Development Setup
+注意: エンティティ名は現在音写形式で生成されます。**開発者ツール** → **状態**で実際のエンティティ名を確認してください。
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/heartstatnet/ha-disasterinformation.git
-   ```
+### セットアップの確認
+1. **開発者ツール** → **状態**で利用可能なエンティティを確認
+2. `sensor.` および `binary_sensor.` で始まるエンティティを確認
+3. 上記のカード例でこれらのエンティティIDを使用
 
-2. Create a symlink to your Home Assistant custom_components directory:
-   ```bash
-   ln -s /path/to/ha-disasterinformation/custom_components/disasterinformation /path/to/homeassistant/custom_components/
-   ```
+## サポート
 
-3. Restart Home Assistant and check logs:
-   ```bash
-   tail -f /path/to/homeassistant/home-assistant.log
-   ```
+- **ドキュメント**: [GitHubリポジトリ](https://github.com/heartstatnet/ha-disasterinformation)
+- **問題報告**: [バグ報告・機能要望](https://github.com/heartstatnet/ha-disasterinformation/issues)
+- **ディスカッション**: [コミュニティディスカッション](https://github.com/heartstatnet/ha-disasterinformation/discussions)
 
-## Contributing
+## 免責事項
 
-Contributions are welcome! Please:
+このインテグレーションは参考目的で防災情報を提供します。必ず公式の政府発表および避難指示に従ってください。本インテグレーションの使用により生じた損害について開発者は責任を負いません。
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+## ライセンス
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Card Display Troubleshooting
-
-If you're having issues with card display, try these standard Home Assistant cards instead:
-
-### Quick Fixes
-1. **Use Entity Card**: Most reliable for basic display
-2. **Use Conditional Cards**: Only show when alerts are active
-3. **Check Entity Names**: Ensure entity IDs match your configured areas
-4. **Verify Sensors**: Check that sensors are created and updating
-
-### Common Entity Name Patterns
-Entity names are generated based on your configured area (example for Kitakyushu City, Fukuoka Prefecture):
-- `sensor.fu_gang_xian_bei_jiu_zhou_shi_qi_xiang_jing_bao` - Weather warnings
-- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao` - Warning status
-- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_te_bie_jing_bao` - Special warning status
-- `binary_sensor.fu_gang_xian_bei_jiu_zhou_shi_zhu_yi_bao` - Advisory status
-
-Note: Entity names are currently generated in transliterated form. Check your actual entity names in Developer Tools → States.
-
-### Testing Your Setup
-1. Check available entities in **Developer Tools → States**
-2. Look for entities starting with `sensor.` and `binary_sensor.`
-3. Use these entity IDs in the card examples above
-
-## Support
-
-- **Documentation**: [GitHub Repository](https://github.com/heartstatnet/ha-disasterinformation)
-- **Issues**: [Report bugs or request features](https://github.com/heartstatnet/ha-disasterinformation/issues)
-- **Discussions**: [Community discussions](https://github.com/heartstatnet/ha-disasterinformation/discussions)
-
-## Disclaimer
-
-This integration provides disaster information for reference purposes. Always follow official government announcements and evacuation orders. The developers are not responsible for any damages or losses that may occur from the use of this integration.
+このプロジェクトはMITライセンスの下で公開されています。詳細は[LICENSE](LICENSE)ファイルを参照してください。
 
 ---
 
-**気象庁防災情報 Home Assistant Integration**  
-Bringing Japan's official disaster information to your smart home.
+**気象庁防災情報 Home Assistant インテグレーション**  
+日本の公式防災情報をスマートホームに！
