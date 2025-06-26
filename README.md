@@ -50,6 +50,9 @@ A Home Assistant custom integration that provides real-time disaster information
    - **Update Interval**: Set how often to check for updates (minimum 5 minutes, default 10 minutes)
 4. Click "Submit" to complete the setup
 
+![Configuration UI](docs/images/ui.png)
+*Configuration interface showing prefecture and municipality selection*
+
 ### Multiple Regions
 
 You can add multiple regions by repeating the configuration process. Each region will create a separate device with its own set of sensors.
