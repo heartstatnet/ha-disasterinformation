@@ -99,7 +99,7 @@ Here are 3 essential card configurations for displaying disaster information:
 
 ```yaml
 type: entity
-entity: sensor.tokyo_warnings
+entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
 name: 気象警報・注意報
 icon: mdi:alert
 ```
@@ -111,11 +111,11 @@ icon: mdi:alert
 ```yaml
 type: conditional
 conditions:
-  - entity: binary_sensor.tokyo_warning
+  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
     state: "on"
 card:
   type: entity
-  entity: sensor.tokyo_warnings
+  entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
   name: ⚠️ 気象警報発表中
   icon: mdi:alert
 ```
@@ -128,19 +128,16 @@ card:
 type: entities
 title: 防災情報詳細
 entities:
-  - entity: sensor.tokyo_warnings
+  - entity: sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao
     name: 気象警報・注意報
     icon: mdi:weather-cloudy-alert
-  - entity: sensor.tokyo_earthquake
-    name: 地震情報
-    icon: mdi:earth
-  - entity: binary_sensor.tokyo_special_warning
+  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao
     name: 特別警報
     icon: mdi:alert-octagon
-  - entity: binary_sensor.tokyo_warning
+  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_jing_bao
     name: 警報
     icon: mdi:alert
-  - entity: binary_sensor.tokyo_advisory
+  - entity: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
     name: 注意報
     icon: mdi:alert-outline
 ```
@@ -153,7 +150,7 @@ automation:
   - alias: "Flash lights on special warning"
     trigger:
       - platform: state
-        entity_id: binary_sensor.shibuya_ku_special_warning
+        entity_id: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao
         to: 'on'
     action:
       - service: light.turn_on
@@ -163,24 +160,21 @@ automation:
           effect: colorloop
       - service: notify.mobile_app
         data:
-          message: "Special weather warning issued for Shibuya!"
+          message: "Special weather warning issued for Ishikawa!"
 ```
 
-### Earthquake Alert
+### Advisory Alert
 ```yaml
 automation:
-  - alias: "Earthquake notification"
+  - alias: "Advisory notification"
     trigger:
       - platform: state
-        entity_id: binary_sensor.shibuya_ku_earthquake_detected
+        entity_id: binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao
         to: 'on'
     action:
       - service: notify.family
         data:
-          message: "Earthquake detected: {{ states('sensor.shibuya_ku_earthquake') }}"
-      - service: switch.turn_off
-        target:
-          entity_id: switch.gas_main
+          message: "Weather advisory issued: {{ states('sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao') }}"
 ```
 
 ## Data Source
@@ -249,11 +243,13 @@ If you're having issues with card display, try these standard Home Assistant car
 4. **Verify Sensors**: Check that sensors are created and updating
 
 ### Common Entity Name Patterns
-Replace `tokyo` with your configured area:
-- `sensor.tokyo_warnings` - Weather warnings
-- `sensor.tokyo_earthquake` - Earthquake information
-- `binary_sensor.tokyo_warning` - Warning status
-- `binary_sensor.tokyo_advisory` - Advisory status
+Entity names are generated based on your configured area (example for Ishikawa Prefecture):
+- `sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_qi_xiang_jing_bao` - Weather warnings
+- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_jing_bao` - Warning status
+- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_te_bie_jing_bao` - Special warning status
+- `binary_sensor.shi_chuan_xian_shi_chuan_xian_quan_yu_zhu_yi_bao` - Advisory status
+
+Note: Entity names are currently generated in transliterated form. Check your actual entity names in Developer Tools → States.
 
 ### Testing Your Setup
 1. Check available entities in **Developer Tools → States**
