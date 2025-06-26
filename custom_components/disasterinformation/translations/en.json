@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Japan Meteorological Agency Disaster Information",
+        "description": "Configure JMA disaster information integration",
+        "data": {
+          "prefecture": "Prefecture",
+          "municipality": "Municipality", 
+          "update_interval": "Update interval (minutes)"
+        }
+      }
+    },
+    "error": {
+      "invalid_prefecture": "Invalid prefecture",
+      "invalid_municipality": "Invalid municipality",
+      "invalid_interval": "Update interval must be at least 5 minutes"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "JMA Disaster Information Options",
+        "description": "Change configuration options",
+        "data": {
+          "update_interval": "Update interval (minutes)"
+        }
+      }
+    }
+  }
+}

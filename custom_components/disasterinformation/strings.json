@@ -1,0 +1,31 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "気象庁防災情報",
+        "description": "気象庁防災情報の設定を行います",
+        "data": {
+          "prefecture": "都道府県",
+          "municipality": "市区町村",
+          "update_interval": "更新間隔（分）"
+        }
+      }
+    },
+    "error": {
+      "invalid_prefecture": "無効な都道府県です",
+      "invalid_municipality": "無効な市区町村です",
+      "invalid_interval": "更新間隔は5分以上で設定してください"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "気象庁防災情報 オプション",
+        "description": "設定を変更します",
+        "data": {
+          "update_interval": "更新間隔（分）"
+        }
+      }
+    }
+  }
+}
