@@ -1,6 +1,6 @@
 {
   "domain": "disasterinformation",
-  "name": "気象庁防災情報",
+  "name": "JMA Disaster Information",
   "codeowners": ["@heartstatnet"],
   "config_flow": true,
   "documentation": "https://github.com/heartstatnet/ha-disasterinformation",
