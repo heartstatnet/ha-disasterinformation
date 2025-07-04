@@ -1,0 +1,60 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "JMA Disaster Information",
+        "description": "気象庁防災情報の種類を選択してください",
+        "data": {
+          "information_type": "情報種別"
+        }
+      },
+      "region": {
+        "title": "地方選択",
+        "description": "地方を選択してください",
+        "data": {
+          "region": "地方"
+        }
+      },
+      "prefecture": {
+        "title": "都道府県選択",
+        "description": "都道府県を選択してください",
+        "data": {
+          "prefecture": "都道府県"
+        }
+      },
+      "city": {
+        "title": "市区町村選択",
+        "description": "市区町村を選択してください",
+        "data": {
+          "city": "市区町村"
+        }
+      },
+      "earthquake_config": {
+        "title": "地震情報設定",
+        "description": "地震情報の取得条件を設定してください",
+        "data": {
+          "earthquake_time_range": "取得期間",
+          "earthquake_min_magnitude": "最小マグニチュード",
+          "earthquake_min_intensity": "最小震度"
+        }
+      },
+      "final": {
+        "title": "更新設定",
+        "description": "データ更新間隔を設定してください",
+        "data": {
+          "update_interval": "更新間隔（分）"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "気象庁APIに接続できませんでした",
+      "no_prefectures": "選択した地方に都道府県が見つかりませんでした",
+      "no_cities": "選択した都道府県に市区町村が見つかりませんでした",
+      "invalid_state": "設定状態が無効です",
+      "unknown": "不明なエラーが発生しました"
+    },
+    "abort": {
+      "already_configured": "この地域は既に設定されています"
+    }
+  }
+}

@@ -62,25 +62,81 @@ class DisasterInformationCoordinator(DataUpdateCoordinator):
     
     async def _async_update_data(self) -> dict:
         """Fetch data from JMA API."""
-        from .api import JMAApiClient
+        from .api import JMABosaiApiClient
+        from .const import INFO_TYPE_EARTHQUAKE, INFO_TYPE_WEATHER_WARNING
+        import aiohttp
         
         try:
-            api_client = JMAApiClient(self.hass)
-            
-            prefecture = self.entry.data.get("prefecture")
-            city = self.entry.data.get("city")
-            
-            data = await api_client.async_get_disaster_info(prefecture, city)
-            await api_client.async_close()
-            
-            return data
+            async with aiohttp.ClientSession() as session:
+                api_client = JMABosaiApiClient(session)
+                
+                information_type = self.entry.data.get("information_type", INFO_TYPE_WEATHER_WARNING)
+                
+                if information_type == INFO_TYPE_EARTHQUAKE:
+                    # Get earthquake data with filters
+                    time_range = int(self.entry.data.get("earthquake_time_range", "24"))
+                    min_magnitude = float(self.entry.data.get("earthquake_min_magnitude", "0"))
+                    min_intensity = self.entry.data.get("earthquake_min_intensity", "0")
+                    
+                    data = await api_client.get_earthquake_data(
+                        time_range_hours=time_range,
+                        min_magnitude=min_magnitude,
+                        min_intensity=min_intensity
+                    )
+                    
+                    if data:
+                        data["information_type"] = INFO_TYPE_EARTHQUAKE
+                        return data
+                    else:
+                        return {
+                            "information_type": INFO_TYPE_EARTHQUAKE,
+                            "earthquakes": [],
+                            "count": 0,
+                            "status": "error"
+                        }
+                        
+                else:
+                    # Get weather warning data
+                    warning_area_code = self.entry.data.get("warning_area_code")
+                    if not warning_area_code:
+                        return {
+                            "information_type": INFO_TYPE_WEATHER_WARNING,
+                            "status": "error",
+                            "warnings": []
+                        }
+                    
+                    data = await api_client.get_warning_data(warning_area_code)
+                    
+                    if data:
+                        data["information_type"] = INFO_TYPE_WEATHER_WARNING
+                        data["prefecture"] = self.entry.data.get("prefecture")
+                        data["city"] = self.entry.data.get("city")
+                        return data
+                    else:
+                        return {
+                            "information_type": INFO_TYPE_WEATHER_WARNING,
+                            "prefecture": self.entry.data.get("prefecture"),
+                            "city": self.entry.data.get("city"),
+                            "warnings": [],
+                            "status": "error"
+                        }
             
         except Exception as e:
             _LOGGER.error(f"Error updating disaster information: {e}")
-            return {
-                "prefecture": self.entry.data.get("prefecture"),
-                "city": self.entry.data.get("city"),
-                "warnings": [],
-                "last_update": None,
-                "status": "error"
-            }
+            information_type = self.entry.data.get("information_type", INFO_TYPE_WEATHER_WARNING)
+            
+            if information_type == INFO_TYPE_EARTHQUAKE:
+                return {
+                    "information_type": INFO_TYPE_EARTHQUAKE,
+                    "earthquakes": [],
+                    "count": 0,
+                    "status": "error"
+                }
+            else:
+                return {
+                    "information_type": INFO_TYPE_WEATHER_WARNING,
+                    "prefecture": self.entry.data.get("prefecture"),
+                    "city": self.entry.data.get("city"),
+                    "warnings": [],
+                    "status": "error"
+                }
