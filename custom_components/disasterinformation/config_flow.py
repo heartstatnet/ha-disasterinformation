@@ -154,8 +154,11 @@ class DisasterInformationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         # Get prefectures for the selected region
         offices = await self._get_offices_for_region()
         
+        _LOGGER.debug(f"Found {len(offices)} offices for region {self._region} (code: {self._region_code})")
+        
         if not offices:
             errors["base"] = "no_prefectures"
+            _LOGGER.error(f"No prefectures found for region {self._region} (code: {self._region_code})")
             return self.async_show_form(
                 step_id="prefecture",
                 data_schema=vol.Schema({}),
@@ -280,6 +283,10 @@ class DisasterInformationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _get_offices_for_region(self) -> dict[str, str]:
         """Get prefectures for the selected region."""
         if not self._area_manager or not self._region_code:
+            _LOGGER.error(f"Area manager not initialized or region code missing. area_manager: {self._area_manager}, region_code: {self._region_code}")
             return {}
         
-        return self._area_manager.get_offices_for_center(self._region_code)
+        _LOGGER.debug(f"Getting offices for region code: {self._region_code}")
+        offices = self._area_manager.get_offices_for_center(self._region_code)
+        _LOGGER.debug(f"Retrieved {len(offices)} offices: {list(offices.keys())}")
+        return offices

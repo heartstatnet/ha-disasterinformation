@@ -34,6 +34,7 @@ class AreaManager:
                             self._process_area_data()
                             self._loaded = True
                             _LOGGER.info("Area data loaded successfully")
+                            _LOGGER.debug(f"Loaded centers: {list(self._area_data.get('centers', {}).keys())}")
                             return True
                         else:
                             _LOGGER.error(f"Failed to load area data: {response.status}")
@@ -75,19 +76,29 @@ class AreaManager:
     def get_offices_for_center(self, center_code: str) -> Dict[str, str]:
         """Get offices (都道府県) for a specific center."""
         if not self._loaded:
+            _LOGGER.debug(f"Area data not loaded, returning empty dict")
             return {}
 
         offices = {}
         centers = self._area_data.get("centers", {})
         center_info = centers.get(center_code, {})
         
+        _LOGGER.debug(f"Looking for center_code: {center_code}")
+        _LOGGER.debug(f"Available centers: {list(centers.keys())}")
+        _LOGGER.debug(f"Center info for {center_code}: {center_info}")
+        
         if "children" in center_info:
+            _LOGGER.debug(f"Children of center {center_code}: {center_info['children']}")
             for office_code in center_info["children"]:
                 office_info = self._area_data.get("offices", {}).get(office_code, {})
                 office_name = office_info.get("name", "")
+                _LOGGER.debug(f"Office {office_code}: {office_name}")
                 if office_name:
                     offices[office_name] = office_code
+        else:
+            _LOGGER.debug(f"No children found for center {center_code}")
 
+        _LOGGER.debug(f"Returning offices: {offices}")
         return offices
 
     def get_class20s_for_office(self, office_code: str) -> Dict[str, str]:
