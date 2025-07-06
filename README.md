@@ -117,7 +117,7 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ```yaml
 type: entity
-entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
 name: 気象警報・注意報
 icon: mdi:weather-lightning
 ```
@@ -129,13 +129,13 @@ icon: mdi:weather-lightning
 ```yaml
 type: conditional
 conditions:
-  - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
     state_not: "発表なし"
 card:
   type: entities
   title: ⚠️ 気象警報・注意報発表中
   entities:
-    - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+    - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
       name: 現在の状況
   show_header_toggle: false
 ```
@@ -197,7 +197,7 @@ cards:
   - type: horizontal-stack
     cards:
       - type: entity
-        entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+        entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
         name: 気象警報・注意報
         icon: mdi:weather-lightning
       - type: entity
@@ -207,16 +207,16 @@ cards:
   
   - type: conditional
     conditions:
-      - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+      - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
         state_not: "発表なし"
     card:
       type: entities
       title: ⚠️ 発表中の警報・注意報
       entities:
-        - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+        - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
           attribute: warnings
           name: 警報
-        - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+        - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
           attribute: advisories
           name: 注意報
       show_header_toggle: false
@@ -247,13 +247,13 @@ cards:
 ```yaml
 type: conditional
 conditions:
-  - entity: sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao
+  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
     state_not: "発表なし"
 card:
   type: markdown
-  title: 🚨 八重山地方 竹富町 防災情報
+  title: 🚨 福岡県 北九州市 防災情報
   content: |
-    {% set entity = 'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao' %}
+    {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
     {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
     {% set warnings = state_attr(entity, 'warnings') %}
     {% set advisories = state_attr(entity, 'advisories') %}
@@ -298,8 +298,8 @@ cards:
     title: 🗾 全国防災情報モニター
     content: |
       {% set regions = [
+        'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao',
         'sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao',
-        'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao',
         'sensor.zong_gu_di_fang_zhi_xing_ting_jing_bao_zhu_yi_bao'
       ] %}
       
@@ -333,7 +333,7 @@ cards:
 type: markdown
 title: 🛡️ 防災情報バッジ
 content: |
-  {% set entity = 'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao' %}
+  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
   {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
   {% set warnings = state_attr(entity, 'warnings') %}
   {% set advisories = state_attr(entity, 'advisories') %}
