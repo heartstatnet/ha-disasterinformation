@@ -255,16 +255,14 @@ class JMABosaiApiClient:
                         # Check if warning applies to the specific city
                         warning_applies = False
                         
-                        # Check if city area code is in the warning areas
-                        warning_areas = warning.get("areas", [])
-                        if city_area_code and warning_areas:
-                            # Check if the city area code is in the warning areas
-                            for warning_area in warning_areas:
-                                if warning_area.get("code") == city_area_code:
-                                    warning_applies = True
-                                    break
-                        elif not warning_areas:
-                            # For warnings without specific areas, include all areas that match the target
+                        # JMA BOSAI API structure: warnings are directly under each area
+                        # If city_area_code is specified, only include warnings from that specific area
+                        if city_area_code:
+                            # Only include warnings from the specific city area code
+                            if area_code == city_area_code:
+                                warning_applies = True
+                        else:
+                            # If no specific city is specified, include all warnings from the target area
                             warning_applies = True
                         
                         if warning_applies:
