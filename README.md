@@ -4,11 +4,11 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ## Features
 
-- **Weather Warnings & Advisories**: Real-time alerts for thunderstorms, heavy rain, strong winds, snow, and other weather-related warnings
-- **Earthquake Information**: Live earthquake data including intensity, epicenter, and magnitude
+- **Weather Warnings & Advisories**: Real-time alerts for thunderstorms, heavy rain, strong winds, snow, and other weather-related warnings with city-level precision
+- **Earthquake Information**: Live earthquake data with recent 10 earthquakes history, flexible filtering by time range, magnitude, and intensity
 - **Multi-Region Support**: Monitor multiple areas (home, workplace, family locations)
 - **Hierarchical Area Selection**: Choose from region → prefecture → municipality
-- **Built-in Dashboard Cards**: Conditional cards that only show when alerts are active
+- **Advanced Dashboard Cards**: Conditional cards, time-filtered earthquake displays, and comprehensive disaster information dashboards
 - **Home Assistant Automation**: Trigger automations based on disaster alerts
 - **HACS Compatible**: Easy installation through Home Assistant Community Store
 
@@ -27,11 +27,12 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ## 主な機能
 
-- **気象警報・注意報**: 雷、大雨、強風、大雪などの気象警報・注意報をリアルタイム取得
-- **地震情報**: 震源地、マグニチュード、震度分布などの最新地震情報
-- **複数地域対応**: 自宅、勤務先、実家など複数地域の監視が可能
+- **気象警報・注意報**: 雷、大雨、強風、大雪など各種気象警報・注意報をリアルタイム取得
+- **地震情報**: 全国の地震情報を取得、直近10件の地震データを保持
+- **市区町村レベル対応**: 正確な地域フィルタリングによる地域固有の警報情報
 - **階層的地域選択**: 地方 → 都道府県 → 市区町村の3段階選択
-- **自動化対応**: 警報・注意報をトリガーとしたHome Assistantオートメーション
+- **柔軟な地震フィルタ**: 時間範囲、マグニチュード、震度による地震情報フィルタリング
+- **豊富なダッシュボード**: 条件付き表示、時間フィルタなど高度なダッシュボードカード
 - **HACS対応**: Home Assistant Community Store経由での簡単インストール
 
 ## インストール方法
@@ -70,91 +71,173 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ## エンティティ
 
-設定した地域ごとに、`[市区町村名] 気象庁防災情報`という名前のデバイスが作成され、以下のエンティティが提供されます：
+この統合では、2つのタイプのエンティティが提供されます：
 
-### センサーエンティティ
+### 1. 気象警報・注意報エンティティ（地域選択時）
 
-#### 気象警報・注意報 (`sensor.[地域名]_警報注意報`)
-- **状態**: 発表中の警報・注意報の概要（例：「注意報発表中」、「警報発表中」、「発表なし」）
-- **属性**:
-  - `headline`: 気象庁発表ヘッドライン
-  - `report_datetime`: 発表日時
-  - `warnings`: 警報のリスト
-  - `advisories`: 注意報のリスト
+設定した地域ごとに、`[都道府県名] [市区町村名] 気象庁防災情報`という名前のデバイスが作成されます。
+
+#### 気象警報・注意報センサー (`sensor.[地域名中国語音写]_jing_bao_zhu_yi_bao`)
+- **状態**: 発表中の警報・注意報の概要（例：「雷注意報」、「大雨警報」、「発表なし」）
+- **主要属性**:
+  - `warnings`: 警報のリスト（名前、重要度、地域コード、状態）
+  - `advisories`: 注意報のリスト（名前、重要度、地域コード、状態）
   - `emergency_warnings`: 特別警報のリスト
+  - `warning_count`: 発表中の警報・注意報数
+  - `status`: 全体状態（「警報発表中」、「注意報発表中」、「発表なし」）
+  - `last_update`: 最終更新時刻
 
-#### 地震情報 (`sensor.[地域名]_地震情報`)
-- **状態**: 最新の地震情報（例：「最大震度3」、「地震情報なし」）
-- **属性**:
-  - `report_datetime`: 発表日時
-  - `event_id`: 地震識別ID
-  - `hypocenter`: 震源地
-  - `magnitude`: マグニチュード
-  - `depth`: 深さ
-  - `intensity_areas`: 地域別震度情報
+**エンティティ名の例**:
+- 北九州市: `sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao`
+- 那覇市: `sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao`
+- 東京都千代田区: `sensor.dong_jing_du_qian_dai_tian_qu_jing_bao_zhu_yi_bao`
 
-### バイナリセンサーエンティティ
+### 2. 地震情報エンティティ（全国対象）
 
-オートメーションでの利用を容易にするため：
-
-- **特別警報** (`binary_sensor.[地域名]_特別警報`): 特別警報発表中にON
-- **警報** (`binary_sensor.[地域名]_警報`): 何らかの警報発表中にON
-- **注意報** (`binary_sensor.[地域名]_注意報`): 何らかの注意報発表中にON
+#### 地震情報センサー (`sensor.di_zhen_qing_bao`)
+- **状態**: フィルタ条件に該当する地震数（例：「3件の地震」、「該当する地震なし」）
+- **主要属性**:
+  - `recent_earthquakes`: **直近10件の地震情報**
+    - `report_datetime`: 報告日時
+    - `hypocenter`: 震源地
+    - `magnitude`: マグニチュード
+  - `latest_earthquake`: 最新地震の詳細情報
+  - `earthquake_count`: フィルタ条件に該当する地震数
+  - `time_range_hours`: 検索時間範囲（時間）
+  - `min_magnitude`: 最小マグニチュード
+  - `min_intensity`: 最小震度
 
 ## ダッシュボードカード
 
-防災情報を表示するための3つの基本カード設定：
+防災情報を効果的に表示するためのカード設定例：
 
-### 1. 基本エンティティカード（推奨）
+### 1. 気象警報・注意報カード
 
-シンプルで確実に動作する基本カードです。
+設定した地域の気象警報・注意報を表示します。
 
 ```yaml
 type: entity
-entity: sensor.tokyo_警報注意報
+entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
 name: 気象警報・注意報
-icon: mdi:alert
+icon: mdi:weather-lightning
 ```
 
-### 2. 警報時のみ表示カード
+### 2. 警報時のみ表示する条件付きカード
 
-警報や注意報がある時のみ表示される条件付きカードです。
+警報や注意報が発表されている時のみ表示されます。
 
 ```yaml
 type: conditional
 conditions:
-  - entity: binary_sensor.tokyo_注意報
-    state: "on"
+  - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+    state_not: "発表なし"
 card:
-  type: entity
-  entity: sensor.tokyo_警報注意報
-  name: ⚠️ 気象警報・注意報発表中
-  icon: mdi:alert
+  type: entities
+  title: ⚠️ 気象警報・注意報発表中
+  entities:
+    - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+      name: 現在の状況
+  show_header_toggle: false
 ```
 
-### 3. 詳細情報カード
+### 3. 地震情報カード（基本）
 
-すべての防災情報を一覧表示する詳細カードです。
+全国の地震情報を表示します。
 
 ```yaml
-type: entities
-title: 防災情報詳細
-entities:
-  - entity: sensor.tokyo_警報注意報
-    name: 気象警報・注意報
-    icon: mdi:weather-cloudy-alert
-  - entity: sensor.tokyo_地震情報
-    name: 地震情報
-    icon: mdi:earth
-  - entity: binary_sensor.tokyo_特別警報
-    name: 特別警報
-    icon: mdi:alert-octagon
-  - entity: binary_sensor.tokyo_警報
-    name: 警報
-    icon: mdi:alert
-  - entity: binary_sensor.tokyo_注意報
-    name: 注意報
-    icon: mdi:alert-outline
+type: entity
+entity: sensor.di_zhen_qing_bao
+name: 地震情報
+icon: mdi:earth
+```
+
+### 4. 直近1時間の地震情報カード（詳細）
+
+直近1時間以内に発生した地震のみを表示する高度なカードです。
+
+```yaml
+type: markdown
+title: 🔍 直近1時間の地震情報
+content: |
+  {% set earthquakes = state_attr('sensor.di_zhen_qing_bao', 'recent_earthquakes') %}
+  {% if earthquakes %}
+    {% set ns = namespace(recent_eq=[]) %}
+    {% for eq in earthquakes %}
+      {% set report_time = strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z') %}
+      {% set current_time = now() %}
+      {% set time_diff = (current_time - report_time).total_seconds() / 3600 %}
+      {% if time_diff <= 1 %}
+        {% set ns.recent_eq = ns.recent_eq + [eq] %}
+      {% endif %}
+    {% endfor %}
+    
+    {% if ns.recent_eq %}
+      | 時刻 | 震源地 | マグニチュード |
+      |------|--------|----------------|
+      {% for eq in ns.recent_eq %}
+      | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
+      {% endfor %}
+      
+      **{{ ns.recent_eq | length }}件の地震が過去1時間以内に発生**
+    {% else %}
+      ✅ 直近1時間以内に地震は発生していません
+    {% endif %}
+  {% else %}
+    ❌ 地震データを取得できませんでした
+  {% endif %}
+```
+
+### 5. 総合防災ダッシュボード
+
+気象警報と地震情報を統合した総合ダッシュボードです。
+
+```yaml
+type: vertical-stack
+cards:
+  - type: horizontal-stack
+    cards:
+      - type: entity
+        entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+        name: 気象警報・注意報
+        icon: mdi:weather-lightning
+      - type: entity
+        entity: sensor.di_zhen_qing_bao
+        name: 地震情報
+        icon: mdi:earth
+  
+  - type: conditional
+    conditions:
+      - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+        state_not: "発表なし"
+    card:
+      type: entities
+      title: ⚠️ 発表中の警報・注意報
+      entities:
+        - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+          attribute: warnings
+          name: 警報
+        - entity: sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao
+          attribute: advisories
+          name: 注意報
+      show_header_toggle: false
+  
+  - type: markdown
+    title: 📊 最新10件の地震情報
+    content: |
+      {% set earthquakes = state_attr('sensor.di_zhen_qing_bao', 'recent_earthquakes') %}
+      {% if earthquakes %}
+        | 報告日時 | 震源地 | M |
+        |----------|--------|---|
+        {% for eq in earthquakes[:5] %}
+        | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | {{ eq.magnitude }} |
+        {% endfor %}
+        
+        {% if earthquakes | length > 5 %}
+        *他{{ earthquakes | length - 5 }}件の地震情報あり*
+        {% endif %}
+      {% else %}
+        データなし
+      {% endif %}
 ```
 
 ## データソース

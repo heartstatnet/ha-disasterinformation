@@ -186,18 +186,17 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
                 }
             })
         
-        # Add all earthquakes list (limited to essential info)
-        earthquake_list = []
-        for eq in earthquakes[:20]:  # Limit to 20 most recent
-            earthquake_list.append({
-                "origin_time": eq.get("origin_time", ""),
+        # Add recent earthquakes list (10 most recent with report_datetime, hypocenter, magnitude only)
+        recent_earthquakes = data.get("recent_earthquakes", [])
+        formatted_recent = []
+        for eq in recent_earthquakes:
+            formatted_recent.append({
+                "report_datetime": eq.get("report_datetime", ""),
                 "hypocenter": eq.get("hypocenter", ""),
-                "depth": eq.get("depth", ""),
                 "magnitude": eq.get("magnitude", ""),
-                "max_intensity": eq.get("max_intensity", ""),
             })
         
-        attributes["recent_earthquakes"] = earthquake_list
+        attributes["recent_earthquakes"] = formatted_recent
         
         return attributes
 
