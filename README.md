@@ -240,6 +240,142 @@ cards:
       {% endif %}
 ```
 
+### 6. 複数警報対応の詳細表示カード
+
+複数の警報・注意報が同時に発令された場合に、種類別に美しく表示するカードです。
+
+```yaml
+type: conditional
+conditions:
+  - entity: sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao
+    state_not: "発表なし"
+card:
+  type: markdown
+  title: 🚨 八重山地方 竹富町 防災情報
+  content: |
+    {% set entity = 'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao' %}
+    {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
+    {% set warnings = state_attr(entity, 'warnings') %}
+    {% set advisories = state_attr(entity, 'advisories') %}
+    {% set total_count = state_attr(entity, 'warning_count') %}
+    
+    **現在の状況**: {{ states(entity) }}  
+    **合計**: {{ total_count }}件の警報・注意報
+    
+    {% if emergency_warnings and emergency_warnings|length > 0 %}
+    ### 🔴 特別警報 ({{ emergency_warnings|length }}件)
+    {% for warning in emergency_warnings %}
+    - **{{ warning }}**
+    {% endfor %}
+    {% endif %}
+    
+    {% if warnings and warnings|length > 0 %}
+    ### 🟠 警報 ({{ warnings|length }}件)
+    {% for warning in warnings %}
+    - **{{ warning }}**
+    {% endfor %}
+    {% endif %}
+    
+    {% if advisories and advisories|length > 0 %}
+    ### 🟡 注意報 ({{ advisories|length }}件)
+    {% for advisory in advisories %}
+    - {{ advisory }}
+    {% endfor %}
+    {% endif %}
+    
+    ---
+    *最終更新: {{ state_attr(entity, 'last_update') or '取得中...' }}*
+```
+
+### 7. 複数地域の統合監視ダッシュボード
+
+複数の地域を同時に監視するためのコンパクトなダッシュボードです。
+
+```yaml
+type: vertical-stack
+cards:
+  - type: markdown
+    title: 🗾 全国防災情報モニター
+    content: |
+      {% set regions = [
+        'sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao',
+        'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao',
+        'sensor.zong_gu_di_fang_zhi_xing_ting_jing_bao_zhu_yi_bao'
+      ] %}
+      
+      | 地域 | 状況 | 件数 |
+      |------|------|------|
+      {% for entity in regions %}
+      {% if states(entity) != 'unavailable' %}
+      {% set state = states(entity) %}
+      {% set count = state_attr(entity, 'warning_count') or 0 %}
+      {% set prefecture = state_attr(entity, 'prefecture') %}
+      {% set city = state_attr(entity, 'city') %}
+      {% if state == '発表なし' %}
+      | {{ prefecture }}{{ city }} | ✅ {{ state }} | {{ count }} |
+      {% elif '注意報' in state %}
+      | {{ prefecture }}{{ city }} | 🟡 {{ state }} | {{ count }} |
+      {% elif '警報' in state %}
+      | {{ prefecture }}{{ city }} | 🟠 {{ state }} | {{ count }} |
+      {% elif '特別警報' in state %}
+      | {{ prefecture }}{{ city }} | 🔴 {{ state }} | {{ count }} |
+      {% else %}
+      | {{ prefecture }}{{ city }} | ❓ {{ state }} | {{ count }} |
+      {% endif %}
+      {% endif %}
+      {% endfor %}
+
+### 8. 警報レベル別のバッジ表示カード
+
+視覚的に分かりやすいバッジスタイルの表示カードです。
+
+```yaml
+type: markdown
+title: 🛡️ 防災情報バッジ
+content: |
+  {% set entity = 'sensor.ba_zhong_shan_di_fang_zhu_fu_ting_jing_bao_zhu_yi_bao' %}
+  {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
+  {% set warnings = state_attr(entity, 'warnings') %}
+  {% set advisories = state_attr(entity, 'advisories') %}
+  
+  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0;">
+  
+  {% if emergency_warnings and emergency_warnings|length > 0 %}
+  {% for warning in emergency_warnings %}
+  <span style="background: #d32f2f; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+  🔴 {{ warning }}
+  </span>
+  {% endfor %}
+  {% endif %}
+  
+  {% if warnings and warnings|length > 0 %}
+  {% for warning in warnings %}
+  <span style="background: #f57c00; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+  🟠 {{ warning }}
+  </span>
+  {% endfor %}
+  {% endif %}
+  
+  {% if advisories and advisories|length > 0 %}
+  {% for advisory in advisories %}
+  <span style="background: #fbc02d; color: #333; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+  🟡 {{ advisory }}
+  </span>
+  {% endfor %}
+  {% endif %}
+  
+  {% if (emergency_warnings|length + warnings|length + advisories|length) == 0 %}
+  <span style="background: #4caf50; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
+  ✅ 発表なし
+  </span>
+  {% endif %}
+  
+  </div>
+  
+  **地域**: {{ state_attr(entity, 'prefecture') }}{{ state_attr(entity, 'city') }}  
+  **合計**: {{ state_attr(entity, 'warning_count') or 0 }}件
+```
+
 ## データソース
 
 この統合は[気象庁防災情報API（BOSAI API）](https://www.jma.go.jp/bosai/)をデータソースとして使用しています。
