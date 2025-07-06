@@ -54,29 +54,29 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data or self.coordinator.data.get("status") == "error":
             return "不明"
         
-        warnings = self.coordinator.data.get("warnings", [])
-        if not warnings:
+        # Get all types of warnings from coordinator data
+        all_warnings = self.coordinator.data.get("warnings", [])
+        all_advisories = self.coordinator.data.get("advisories", [])
+        all_emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
+        
+        # Check if any warnings/advisories exist
+        total_alerts = len(all_warnings) + len(all_advisories) + len(all_emergency_warnings)
+        if total_alerts == 0:
             return "発表なし"
         
-        # Find the highest severity warning
-        special_warnings = [w for w in warnings if w.get("severity") == "特別警報"]
-        regular_warnings = [w for w in warnings if w.get("severity") == "警報"]
-        advisories = [w for w in warnings if w.get("severity") == "注意報"]
+        # Separate by severity (they're already separated in the API response)
+        special_warnings = all_emergency_warnings
+        regular_warnings = all_warnings  
+        advisories = all_advisories
         
         if special_warnings:
-            types = []
-            for warning in special_warnings:
-                types.extend(warning.get("types", []))
+            types = [warning.get("name", "不明") for warning in special_warnings]
             return f"特別警報({' '.join(types)})"
         elif regular_warnings:
-            types = []
-            for warning in regular_warnings:
-                types.extend(warning.get("types", []))
+            types = [warning.get("name", "不明") for warning in regular_warnings]
             return f"警報({' '.join(types)})"
         elif advisories:
-            types = []
-            for warning in advisories:
-                types.extend(warning.get("types", []))
+            types = [warning.get("name", "不明") for warning in advisories]
             return f"注意報({' '.join(types)})"
         
         return "発表なし"
@@ -87,26 +87,18 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.data:
             return {}
         
-        warnings = self.coordinator.data.get("warnings", [])
+        # Get separated warning data from coordinator
+        all_warnings = self.coordinator.data.get("warnings", [])
+        all_advisories = self.coordinator.data.get("advisories", [])
+        all_emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
         
-        # Separate warnings by severity
-        special_warnings = [w for w in warnings if w.get("severity") == "特別警報"]
-        regular_warnings = [w for w in warnings if w.get("severity") == "警報"]
-        advisories = [w for w in warnings if w.get("severity") == "注意報"]
+        # Extract warning names for each severity
+        special_warning_types = [w.get("name", "不明") for w in all_emergency_warnings]
+        warning_types = [w.get("name", "不明") for w in all_warnings]
+        advisory_types = [w.get("name", "不明") for w in all_advisories]
         
-        # Extract warning types for each severity
-        special_warning_types = []
-        warning_types = []
-        advisory_types = []
-        
-        for warning in special_warnings:
-            special_warning_types.extend(warning.get("types", []))
-        
-        for warning in regular_warnings:
-            warning_types.extend(warning.get("types", []))
-        
-        for warning in advisories:
-            advisory_types.extend(warning.get("types", []))
+        # Calculate total count
+        total_count = len(all_warnings) + len(all_advisories) + len(all_emergency_warnings)
         
         return {
             "prefecture": self.coordinator.data.get("prefecture"),
@@ -114,13 +106,13 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
             "special_warnings": special_warning_types,
             "warnings": warning_types,
             "advisories": advisory_types,
-            "warning_count": len(warnings),
-            "has_special_warning": len(special_warnings) > 0,
-            "has_warning": len(regular_warnings) > 0,
-            "has_advisory": len(advisories) > 0,
+            "warning_count": total_count,
+            "has_special_warning": len(all_emergency_warnings) > 0,
+            "has_warning": len(all_warnings) > 0,
+            "has_advisory": len(all_advisories) > 0,
             "last_update": self.coordinator.data.get("last_update"),
             "status": self.coordinator.data.get("status", "unknown"),
-            "raw_warnings": warnings,  # 詳細なデバッグ情報
+            "raw_warnings": all_warnings + all_advisories + all_emergency_warnings,  # 詳細なデバッグ情報
         }
 
     @property
