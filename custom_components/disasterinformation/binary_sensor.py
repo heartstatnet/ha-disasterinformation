@@ -59,8 +59,8 @@ class DisasterSpecialWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if not self.coordinator.data:
             return False
         
-        warnings = self.coordinator.data.get("warnings", [])
-        return any(w.get("severity") == "特別警報" for w in warnings)
+        emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
+        return len(emergency_warnings) > 0
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -68,16 +68,13 @@ class DisasterSpecialWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if not self.coordinator.data:
             return {}
         
-        warnings = self.coordinator.data.get("warnings", [])
-        special_warnings = [w for w in warnings if w.get("severity") == "特別警報"]
+        emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
         
-        types = []
-        for warning in special_warnings:
-            types.extend(warning.get("types", []))
+        types = [w.get("name", "不明") for w in emergency_warnings]
         
         return {
             "warning_types": types,
-            "warning_count": len(special_warnings),
+            "warning_count": len(emergency_warnings),
         }
 
     @property
@@ -104,7 +101,8 @@ class DisasterWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
             return False
         
         warnings = self.coordinator.data.get("warnings", [])
-        return any(w.get("severity") in ["特別警報", "警報"] for w in warnings)
+        emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
+        return len(warnings) > 0 or len(emergency_warnings) > 0
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -113,15 +111,15 @@ class DisasterWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
             return {}
         
         warnings = self.coordinator.data.get("warnings", [])
-        active_warnings = [w for w in warnings if w.get("severity") in ["特別警報", "警報"]]
+        emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
         
         types = []
-        for warning in active_warnings:
-            types.extend(warning.get("types", []))
+        types.extend([w.get("name", "不明") for w in warnings])
+        types.extend([w.get("name", "不明") for w in emergency_warnings])
         
         return {
             "warning_types": types,
-            "warning_count": len(active_warnings),
+            "warning_count": len(warnings) + len(emergency_warnings),
         }
 
     @property
@@ -147,8 +145,8 @@ class DisasterAdvisoryBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if not self.coordinator.data:
             return False
         
-        warnings = self.coordinator.data.get("warnings", [])
-        return len(warnings) > 0
+        advisories = self.coordinator.data.get("advisories", [])
+        return len(advisories) > 0
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
@@ -156,15 +154,13 @@ class DisasterAdvisoryBinarySensor(CoordinatorEntity, BinarySensorEntity):
         if not self.coordinator.data:
             return {}
         
-        warnings = self.coordinator.data.get("warnings", [])
+        advisories = self.coordinator.data.get("advisories", [])
         
-        types = []
-        for warning in warnings:
-            types.extend(warning.get("types", []))
+        types = [w.get("name", "不明") for w in advisories]
         
         return {
             "warning_types": types,
-            "warning_count": len(warnings),
+            "warning_count": len(advisories),
         }
 
     @property
