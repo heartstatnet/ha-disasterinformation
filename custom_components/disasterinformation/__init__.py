@@ -105,7 +105,8 @@ class DisasterInformationCoordinator(DataUpdateCoordinator):
                             "warnings": []
                         }
                     
-                    data = await api_client.get_warning_data(warning_area_code)
+                    city_area_code = self.entry.data.get("area_code")
+                    data = await api_client.get_warning_data(warning_area_code, city_area_code)
                     
                     if data:
                         data["information_type"] = INFO_TYPE_WEATHER_WARNING

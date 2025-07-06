@@ -26,7 +26,7 @@ class JMABosaiApiClient:
         """Initialize the API client."""
         self._session = session
 
-    async def get_warning_data(self, area_code: str) -> Optional[Dict[str, Any]]:
+    async def get_warning_data(self, area_code: str, city_area_code: str = None) -> Optional[Dict[str, Any]]:
         """Get warning data for a specific area."""
         try:
             url = f"{JMA_BOSAI_WARNING_URL}/{area_code}.json"
@@ -34,7 +34,7 @@ class JMABosaiApiClient:
                 async with self._session.get(url) as response:
                     if response.status == 200:
                         data = await response.json()
-                        return self._process_warning_data(data)
+                        return self._process_warning_data(data, area_code, city_area_code)
                     else:
                         _LOGGER.error(f"Failed to get warning data: {response.status}")
                         return None
@@ -170,7 +170,7 @@ class JMABosaiApiClient:
             _LOGGER.error(f"Error getting earthquake details: {e}")
             return None
 
-    def _process_warning_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_warning_data(self, data: Dict[str, Any], target_area_code: str, city_area_code: str = None) -> Dict[str, Any]:
         """Process warning data into structured format."""
         processed_data = {
             "status": "発表なし",
@@ -202,13 +202,17 @@ class JMABosaiApiClient:
         active_advisories = []
         active_emergency_warnings = []
 
+        _LOGGER.debug(f"Processing warning data for target area code: {target_area_code}, city area code: {city_area_code}")
+
         for area_type in area_types:
             areas = area_type.get("areas", [])
             for area in areas:
                 area_name = area.get("name", "")
                 area_code = area.get("code", "")
                 
-                # Check for warnings
+                _LOGGER.debug(f"Checking area: {area_name} (code: {area_code})")
+                
+                # Check for warnings and filter by city area code if specified
                 warnings = area.get("warnings", [])
                 for warning in warnings:
                     warning_status = warning.get("status")
@@ -216,24 +220,42 @@ class JMABosaiApiClient:
                     if warning_status in ["発表", "継続"]:
                         warning_code = warning.get("code")
                         
-                        # Determine warning type and severity
-                        warning_type = self._determine_warning_type(warning_code)
+                        # Check if warning applies to the specific city
+                        warning_applies = False
                         
-                        warning_info = {
-                            "code": warning_code,
-                            "name": warning_type["name"],
-                            "severity": warning_type["severity"],
-                            "area": area_name,
-                            "area_code": area_code,
-                            "status": warning_status,
-                        }
+                        # Check if city area code is in the warning areas
+                        warning_areas = warning.get("areas", [])
+                        if city_area_code and warning_areas:
+                            # Check if the city area code is in the warning areas
+                            for warning_area in warning_areas:
+                                if warning_area.get("code") == city_area_code:
+                                    warning_applies = True
+                                    break
+                        elif not warning_areas:
+                            # For warnings without specific areas, include all areas that match the target
+                            warning_applies = True
                         
-                        if warning_type["severity"] == "特別警報":
-                            active_emergency_warnings.append(warning_info)
-                        elif warning_type["severity"] == "警報":
-                            active_warnings.append(warning_info)
-                        elif warning_type["severity"] == "注意報":
-                            active_advisories.append(warning_info)
+                        if warning_applies:
+                            # Determine warning type and severity
+                            warning_type = self._determine_warning_type(warning_code)
+                            
+                            warning_info = {
+                                "code": warning_code,
+                                "name": warning_type["name"],
+                                "severity": warning_type["severity"],
+                                "area": area_name,
+                                "area_code": area_code,
+                                "status": warning_status,
+                            }
+                            
+                            _LOGGER.debug(f"Found applicable warning: {warning_info}")
+                            
+                            if warning_type["severity"] == "特別警報":
+                                active_emergency_warnings.append(warning_info)
+                            elif warning_type["severity"] == "警報":
+                                active_warnings.append(warning_info)
+                            elif warning_type["severity"] == "注意報":
+                                active_advisories.append(warning_info)
 
         # Update processed data
         processed_data["warnings"] = active_warnings
@@ -247,6 +269,8 @@ class JMABosaiApiClient:
             processed_data["status"] = "警報発表中"
         elif active_advisories:
             processed_data["status"] = "注意報発表中"
+
+        _LOGGER.debug(f"Final processed data: {processed_data['status']}, warnings: {len(active_warnings)}, advisories: {len(active_advisories)}")
 
         return processed_data
 
