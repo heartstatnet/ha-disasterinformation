@@ -27,13 +27,52 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ## 主な機能
 
-- **気象警報・注意報**: 雷、大雨、強風、大雪など各種気象警報・注意報をリアルタイム取得
+- **特別警報・警報・注意報**: 雷、大雨、強風、大雪など各種気象情報をリアルタイム取得
 - **地震情報**: 全国の地震情報を取得、直近10件の地震データを保持
-- **市区町村レベル対応**: 正確な地域フィルタリングによる地域固有の警報情報
-- **階層的地域選択**: 地方 → 都道府県 → 市区町村の3段階選択
-- **柔軟な地震フィルタ**: 時間範囲、マグニチュード、震度による地震情報フィルタリング
-- **豊富なダッシュボード**: 条件付き表示、時間フィルタなど高度なダッシュボードカード
-- **HACS対応**: Home Assistant Community Store経由での簡単インストール
+
+## 対応している発令種類
+
+### 特別警報
+- 暴風雪特別警報
+- 大雨特別警報  
+- 暴風特別警報
+- 大雪特別警報
+- 波浪特別警報
+- 高潮特別警報
+- 土砂災害特別警報
+
+### 警報
+- 暴風雪警報
+- 大雨警報
+- 洪水警報
+- 暴風警報
+- 大雪警報
+- 波浪警報
+- 高潮警報
+- 土砂災害警報
+- 大雨危険警報
+- 高潮危険警報
+- 土砂災害危険警報
+
+### 注意報
+- 大雨注意報
+- 洪水注意報
+- 大雪注意報
+- 風雪注意報
+- 雷注意報
+- 強風注意報
+- 波浪注意報
+- 融雪注意報
+- 高潮注意報
+- 濃霧注意報
+- 乾燥注意報
+- なだれ注意報
+- 低温注意報
+- 霜注意報
+- 着氷注意報
+- 着雪注意報
+- 土砂災害注意報
+- その他の注意報
 
 ## インストール方法
 
@@ -73,18 +112,18 @@ A Home Assistant custom integration that provides real-time disaster information
 
 この統合では、2つのタイプのエンティティが提供されます：
 
-### 1. 気象警報・注意報エンティティ（地域選択時）
+### 1. 特別警報・警報・注意報エンティティ（地域選択時）
 
 設定した地域ごとに、`[都道府県名] [市区町村名] 気象庁防災情報`という名前のデバイスが作成されます。
 
-#### 気象警報・注意報センサー (`sensor.[地域名中国語音写]_jing_bao_zhu_yi_bao`)
-- **状態**: 発表中の警報・注意報の概要（例：「雷注意報」、「大雨警報」、「発表なし」）
+#### 特別警報・警報・注意報センサー (`sensor.[地域名中国語音写]_jing_bao_zhu_yi_bao`)
+- **状態**: 発表中の特別警報・警報・注意報の概要（例：「雷注意報」、「大雨警報」、「特別警報(大雨)」、「発表なし」）
 - **主要属性**:
   - `warnings`: 警報のリスト（名前、重要度、地域コード、状態）
   - `advisories`: 注意報のリスト（名前、重要度、地域コード、状態）
   - `emergency_warnings`: 特別警報のリスト
-  - `warning_count`: 発表中の警報・注意報数
-  - `status`: 全体状態（「警報発表中」、「注意報発表中」、「発表なし」）
+  - `warning_count`: 発表中の特別警報・警報・注意報数
+  - `status`: 全体状態（「特別警報発表中」、「警報発表中」、「注意報発表中」、「発表なし」）
   - `last_update`: 最終更新時刻
 
 **エンティティ名の例**:
@@ -105,26 +144,25 @@ A Home Assistant custom integration that provides real-time disaster information
   - `earthquake_count`: フィルタ条件に該当する地震数
   - `time_range_hours`: 検索時間範囲（時間）
   - `min_magnitude`: 最小マグニチュード
-  - `min_intensity`: 最小震度
 
 ## ダッシュボードカード
 
 防災情報を効果的に表示するためのカード設定例：
 
-### 1. 気象警報・注意報カード
+### 1. 気象情報カード（基本）
 
-設定した地域の気象警報・注意報を表示します。
+設定した地域の特別警報・警報・注意報を表示します。
 
 ```yaml
 type: entity
 entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-name: 気象警報・注意報
+name: 特別警報・警報・注意報
 icon: mdi:weather-lightning
 ```
 
-### 2. 警報時のみ表示する条件付きカード
+### 2. 発表時のみ表示する条件付きカード
 
-警報や注意報が発表されている時のみ表示されます。
+特別警報・警報・注意報が発表されている時のみ表示されます。
 
 ```yaml
 type: conditional
@@ -133,25 +171,14 @@ conditions:
     state_not: "発表なし"
 card:
   type: entities
-  title: ⚠️ 気象警報・注意報発表中
+  title: ⚠️ 特別警報・警報・注意報発表中
   entities:
     - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
       name: 現在の状況
   show_header_toggle: false
 ```
 
-### 3. 地震情報カード（基本）
-
-全国の地震情報を表示します。
-
-```yaml
-type: entity
-entity: sensor.di_zhen_qing_bao
-name: 地震情報
-icon: mdi:earth
-```
-
-### 4. 直近1時間の地震情報カード（詳細）
+### 3. 直近1時間の地震情報カード（詳細）
 
 直近1時間以内に発生した地震のみを表示する高度なカードです。
 
@@ -187,7 +214,7 @@ content: |
   {% endif %}
 ```
 
-### 5. 総合防災ダッシュボード
+### 4. 総合防災ダッシュボード
 
 気象警報と地震情報を統合した総合ダッシュボードです。
 
@@ -198,7 +225,7 @@ cards:
     cards:
       - type: entity
         entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-        name: 気象警報・注意報
+        name: 特別警報・警報・注意報
         icon: mdi:weather-lightning
       - type: entity
         entity: sensor.di_zhen_qing_bao
@@ -211,7 +238,7 @@ cards:
         state_not: "発表なし"
     card:
       type: entities
-      title: ⚠️ 発表中の警報・注意報
+      title: ⚠️ 発表中の特別警報・警報・注意報
       entities:
         - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
           attribute: warnings
@@ -240,9 +267,9 @@ cards:
       {% endif %}
 ```
 
-### 6. 複数警報対応の詳細表示カード
+### 5. 複数発表対応の詳細表示カード
 
-複数の警報・注意報が同時に発令された場合に、種類別に美しく表示するカードです。
+複数の特別警報・警報・注意報が同時に発表された場合に、種類別に美しく表示するカードです。
 
 ```yaml
 type: conditional
@@ -260,7 +287,7 @@ card:
     {% set total_count = state_attr(entity, 'warning_count') %}
     
     **現在の状況**: {{ states(entity) }}  
-    **合計**: {{ total_count }}件の警報・注意報
+    **合計**: {{ total_count }}件の特別警報・警報・注意報
     
     {% if emergency_warnings and emergency_warnings|length > 0 %}
     ### 🔴 特別警報 ({{ emergency_warnings|length }}件)
@@ -287,94 +314,175 @@ card:
     *最終更新: {{ state_attr(entity, 'last_update') or '取得中...' }}*
 ```
 
-### 7. 複数地域の統合監視ダッシュボード
+### 6. 気象庁公式カラーによる警報カード
 
-複数の地域を同時に監視するためのコンパクトなダッシュボードです。
+気象庁公式の色指定に従った背景色表示で、重要度を視覚的に表現します。
+
+#### 基本的な警報カード（条件付き背景色）
 
 ```yaml
-type: vertical-stack
-cards:
-  - type: markdown
-    title: 🗾 全国防災情報モニター
-    content: |
-      {% set regions = [
-        'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao',
-        'sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao',
-        'sensor.zong_gu_di_fang_zhi_xing_ting_jing_bao_zhu_yi_bao'
-      ] %}
-      
-      | 地域 | 状況 | 件数 |
-      |------|------|------|
-      {% for entity in regions %}
-      {% if states(entity) != 'unavailable' %}
-      {% set state = states(entity) %}
-      {% set count = state_attr(entity, 'warning_count') or 0 %}
-      {% set prefecture = state_attr(entity, 'prefecture') %}
-      {% set city = state_attr(entity, 'city') %}
-      {% if state == '発表なし' %}
-      | {{ prefecture }}{{ city }} | ✅ {{ state }} | {{ count }} |
-      {% elif '注意報' in state %}
-      | {{ prefecture }}{{ city }} | 🟡 {{ state }} | {{ count }} |
-      {% elif '警報' in state %}
-      | {{ prefecture }}{{ city }} | 🟠 {{ state }} | {{ count }} |
-      {% elif '特別警報' in state %}
-      | {{ prefecture }}{{ city }} | 🔴 {{ state }} | {{ count }} |
-      {% else %}
-      | {{ prefecture }}{{ city }} | ❓ {{ state }} | {{ count }} |
-      {% endif %}
-      {% endif %}
-      {% endfor %}
+type: conditional
+conditions:
+  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
+    state_not: "発表なし"
+card:
+  type: entities
+  entities:
+    - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
+      name: 特別警報・警報・注意報
+  style: |
+    {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
+    {% set has_special = state_attr(entity, 'has_special_warning') %}
+    {% set has_warning = state_attr(entity, 'has_warning') %}
+    {% set has_advisory = state_attr(entity, 'has_advisory') %}
+    {% if has_special %}
+      ha-card { background-color: #000000 !important; color: white !important; }
+    {% elif has_warning %}
+      ha-card { background-color: #663399 !important; color: white !important; }
+    {% elif has_advisory %}
+      ha-card { background-color: #FFFF00 !important; color: black !important; }
+    {% endif %}
+```
 
-### 8. 警報レベル別のバッジ表示カード
-
-視覚的に分かりやすいバッジスタイルの表示カードです。
+#### 詳細な情報種別表示カード（JMA公式カラー対応）
 
 ```yaml
 type: markdown
-title: 🛡️ 防災情報バッジ
+title: 🛡️ 防災情報 (JMA公式カラー)
 content: |
   {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
   {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
   {% set warnings = state_attr(entity, 'warnings') %}
   {% set advisories = state_attr(entity, 'advisories') %}
+  {% set has_special = state_attr(entity, 'has_special_warning') %}
+  {% set has_warning = state_attr(entity, 'has_warning') %}
+  {% set has_advisory = state_attr(entity, 'has_advisory') %}
   
-  <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0;">
+  <div style="margin: 10px 0;">
   
   {% if emergency_warnings and emergency_warnings|length > 0 %}
+  <div style="background: #000000; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 特別警報</div>
   {% for warning in emergency_warnings %}
-  <span style="background: #d32f2f; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-  🔴 {{ warning }}
-  </span>
+  <div style="font-size: 14px;">• {{ warning }}</div>
   {% endfor %}
+  </div>
   {% endif %}
   
   {% if warnings and warnings|length > 0 %}
+  <div style="background: #663399; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報</div>
   {% for warning in warnings %}
-  <span style="background: #f57c00; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-  🟠 {{ warning }}
-  </span>
+  <div style="font-size: 14px;">• {{ warning }}</div>
   {% endfor %}
+  </div>
   {% endif %}
   
   {% if advisories and advisories|length > 0 %}
+  <div style="background: #FFFF00; color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 注意報</div>
   {% for advisory in advisories %}
-  <span style="background: #fbc02d; color: #333; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-  🟡 {{ advisory }}
-  </span>
+  <div style="font-size: 14px;">• {{ advisory }}</div>
   {% endfor %}
+  </div>
   {% endif %}
   
   {% if (emergency_warnings|length + warnings|length + advisories|length) == 0 %}
-  <span style="background: #4caf50; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">
-  ✅ 発表なし
-  </span>
+  <div style="background: #E8F5E8; color: #2E7D32; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+  <div style="font-size: 16px;">✅ 発表なし</div>
+  <div style="font-size: 14px;">現在、特別警報・警報・注意報は発表されていません</div>
+  </div>
   {% endif %}
   
   </div>
   
   **地域**: {{ state_attr(entity, 'prefecture') }}{{ state_attr(entity, 'city') }}  
-  **合計**: {{ state_attr(entity, 'warning_count') or 0 }}件
+  **合計**: {{ state_attr(entity, 'warning_count') or 0 }}件  
+  **最終更新**: {{ state_attr(entity, 'last_update') or '取得中...' }}
+
+style: |
+  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
+  {% set has_special = state_attr(entity, 'has_special_warning') %}
+  {% set has_warning = state_attr(entity, 'has_warning') %}
+  {% set has_advisory = state_attr(entity, 'has_advisory') %}
+  {% if has_special %}
+    ha-card { border-left: 5px solid #000000 !important; }
+  {% elif has_warning %}
+    ha-card { border-left: 5px solid #663399 !important; }
+  {% elif has_advisory %}
+    ha-card { border-left: 5px solid #FFFF00 !important; }
+  {% endif %}
 ```
+
+#### コンパクトなステータスバー表示
+
+```yaml
+type: markdown
+content: |
+  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
+  {% set has_special = state_attr(entity, 'has_special_warning') %}
+  {% set has_warning = state_attr(entity, 'has_warning') %}
+  {% set has_advisory = state_attr(entity, 'has_advisory') %}
+  {% set state = states(entity) %}
+  
+  <div style="display: flex; align-items: center; padding: 8px; border-radius: 8px; 
+  {% if has_special %}background: #000000; color: white;
+  {% elif has_warning %}background: #663399; color: white;
+  {% elif has_advisory %}background: #FFFF00; color: black;
+  {% else %}background: #E8F5E8; color: #2E7D32;
+  {% endif %}">
+  <div style="font-weight: bold; margin-right: 12px;">
+  {% if has_special %}⚠️ 特別警報
+  {% elif has_warning %}⚠️ 警報
+  {% elif has_advisory %}⚠️ 注意報
+  {% else %}✅ 平常
+  {% endif %}
+  </div>
+  <div style="flex: 1;">{{ state }}</div>
+  <div style="font-size: 12px; opacity: 0.8;">{{ state_attr(entity, 'prefecture') }}{{ state_attr(entity, 'city') }}</div>
+  </div>
+```
+
+#### 複数地域の一覧表示（JMAカラー対応）
+
+```yaml
+type: markdown
+title: 🗾 防災情報マップ (JMA公式カラー)
+content: |
+  {% set regions = [
+    'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao',
+    'sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao'
+  ] %}
+  
+  <div style="display: grid; gap: 8px; margin: 10px 0;">
+  {% for entity in regions %}
+  {% if states(entity) != 'unavailable' %}
+  {% set has_special = state_attr(entity, 'has_special_warning') %}
+  {% set has_warning = state_attr(entity, 'has_warning') %}
+  {% set has_advisory = state_attr(entity, 'has_advisory') %}
+  {% set prefecture = state_attr(entity, 'prefecture') %}
+  {% set city = state_attr(entity, 'city') %}
+  {% set state = states(entity) %}
+  
+  <div style="display: flex; align-items: center; padding: 8px; border-radius: 6px; font-size: 14px;
+  {% if has_special %}background: #000000; color: white;
+  {% elif has_warning %}background: #663399; color: white;
+  {% elif has_advisory %}background: #FFFF00; color: black;
+  {% else %}background: #F5F5F5; color: #333;
+  {% endif %}">
+    <div style="font-weight: bold; min-width: 120px;">{{ prefecture }}{{ city }}</div>
+    <div style="margin-left: 12px;">{{ state }}</div>
+  </div>
+  {% endif %}
+  {% endfor %}
+  </div>
+```
+## JMA公式カラーコード
+
+- **特別警報**: `#000000` (黒背景、白文字)
+- **警報**: `#663399` (紫背景、白文字)  
+- **注意報**: `#FFFF00` (黄色背景、黒文字)
+- **発表なし**: `#E8F5E8` (薄緑背景、濃緑文字)
 
 ## データソース
 

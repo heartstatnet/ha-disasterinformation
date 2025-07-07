@@ -79,8 +79,7 @@ class DisasterInformationCoordinator(DataUpdateCoordinator):
                     
                     data = await api_client.get_earthquake_data(
                         time_range_hours=time_range,
-                        min_magnitude=min_magnitude,
-                        min_intensity="0"  # Always include all intensities since we removed intensity filtering
+                        min_magnitude=min_magnitude
                     )
                     
                     if data:

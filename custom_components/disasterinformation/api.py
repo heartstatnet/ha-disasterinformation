@@ -44,8 +44,7 @@ class JMABosaiApiClient:
     async def get_earthquake_data(
         self, 
         time_range_hours: int = 24,
-        min_magnitude: float = 0.0,
-        min_intensity: str = "0"
+        min_magnitude: float = 0.0
     ) -> Optional[Dict[str, Any]]:
         """Get filtered earthquake data."""
         try:
@@ -58,7 +57,7 @@ class JMABosaiApiClient:
                         if earthquake_list:
                             # Filter and get multiple earthquake details
                             return await self._get_filtered_earthquakes(
-                                earthquake_list, time_range_hours, min_magnitude, min_intensity
+                                earthquake_list, time_range_hours, min_magnitude
                             )
                     else:
                         _LOGGER.error(f"Failed to get earthquake list: {response.status}")
@@ -71,8 +70,7 @@ class JMABosaiApiClient:
         self, 
         earthquake_list: List[Dict[str, Any]], 
         time_range_hours: int,
-        min_magnitude: float,
-        min_intensity: str
+        min_magnitude: float
     ) -> Dict[str, Any]:
         """Get filtered earthquake details using only list.json data."""
         from datetime import datetime, timedelta

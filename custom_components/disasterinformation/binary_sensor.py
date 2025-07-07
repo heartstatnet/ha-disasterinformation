@@ -80,7 +80,7 @@ class DisasterSpecialWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def icon(self) -> str:
         """Return the icon for the binary sensor."""
-        return "mdi:alert" if self.is_on else "mdi:shield-check"
+        return "mdi:weather-tornado" if self.is_on else "mdi:shield-check"
 
 
 class DisasterWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
@@ -125,7 +125,7 @@ class DisasterWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def icon(self) -> str:
         """Return the icon for the binary sensor."""
-        return "mdi:weather-lightning" if self.is_on else "mdi:weather-sunny"
+        return "mdi:weather-lightning-rainy" if self.is_on else "mdi:weather-partly-cloudy"
 
 
 class DisasterAdvisoryBinarySensor(CoordinatorEntity, BinarySensorEntity):
@@ -166,7 +166,7 @@ class DisasterAdvisoryBinarySensor(CoordinatorEntity, BinarySensorEntity):
     @property
     def icon(self) -> str:
         """Return the icon for the binary sensor."""
-        return "mdi:information" if self.is_on else "mdi:check-circle"
+        return "mdi:weather-cloudy-alert" if self.is_on else "mdi:weather-sunny"
 
 
 class DisasterEarthquakeBinarySensor(CoordinatorEntity, BinarySensorEntity):

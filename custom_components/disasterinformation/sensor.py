@@ -117,8 +117,23 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
 
     @property
     def icon(self) -> str:
-        """Return the icon for the sensor."""
-        return "mdi:weather-lightning"
+        """Return the icon for the sensor based on highest severity level."""
+        if not self.coordinator.data:
+            return "mdi:weather-sunny"
+        
+        # Check highest severity level and return appropriate icon
+        emergency_warnings = self.coordinator.data.get("emergency_warnings", [])
+        warnings = self.coordinator.data.get("warnings", [])
+        advisories = self.coordinator.data.get("advisories", [])
+        
+        if emergency_warnings:
+            return "mdi:weather-tornado"  # 特別警報 - 最高レベル
+        elif warnings:
+            return "mdi:weather-lightning-rainy"  # 警報 - 重要レベル
+        elif advisories:
+            return "mdi:weather-cloudy-alert"  # 注意報 - 注意レベル
+        else:
+            return "mdi:weather-sunny"  # 発表なし - 平常時
 
 
 class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
