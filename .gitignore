@@ -1,0 +1,7 @@
+# Temporary and test files
+temp/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo

@@ -76,12 +76,11 @@ class DisasterInformationCoordinator(DataUpdateCoordinator):
                     # Get earthquake data with filters
                     time_range = int(self.entry.data.get("earthquake_time_range", "24"))
                     min_magnitude = float(self.entry.data.get("earthquake_min_magnitude", "0"))
-                    min_intensity = self.entry.data.get("earthquake_min_intensity", "0")
                     
                     data = await api_client.get_earthquake_data(
                         time_range_hours=time_range,
                         min_magnitude=min_magnitude,
-                        min_intensity=min_intensity
+                        min_intensity="0"  # Always include all intensities since we removed intensity filtering
                     )
                     
                     if data:

@@ -228,8 +228,6 @@ class DisasterEarthquakeBinarySensor(CoordinatorEntity, BinarySensorEntity):
                 "latest_earthquake_time": latest_earthquake.get("origin_time", ""),
                 "latest_hypocenter": latest_earthquake.get("hypocenter", ""),
                 "latest_magnitude": latest_earthquake.get("magnitude", ""),
-                "latest_max_intensity": latest_earthquake.get("max_intensity", ""),
-                "latest_depth": latest_earthquake.get("depth", ""),
             })
         
         return attributes

@@ -13,7 +13,6 @@ from .const import (
     JMA_BOSAI_EARTHQUAKE_URL,
     WARNING_CODES,
     WARNING_SEVERITY,
-    EARTHQUAKE_INTENSITY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,22 +74,20 @@ class JMABosaiApiClient:
         min_magnitude: float,
         min_intensity: str
     ) -> Dict[str, Any]:
-        """Get filtered earthquake details."""
+        """Get filtered earthquake details using only list.json data."""
         from datetime import datetime, timedelta
         
         # Calculate time threshold
         now = datetime.now()
         time_threshold = now - timedelta(hours=time_range_hours)
         
-        _LOGGER.debug(f"Filtering earthquakes: time_range={time_range_hours}h, min_mag={min_magnitude}, min_intensity={min_intensity}")
+        _LOGGER.debug(f"Filtering earthquakes: time_range={time_range_hours}h, min_mag={min_magnitude}")
         _LOGGER.debug(f"Time threshold: {time_threshold}")
         
         filtered_earthquakes = []
         
         for earthquake_info in earthquake_list:
             try:
-                # Pre-filter using list.json data for efficiency
-                
                 # Check time filter using 'at' field (earthquake occurrence time)
                 origin_time_str = earthquake_info.get("at")
                 if origin_time_str:
@@ -100,7 +97,7 @@ class JMABosaiApiClient:
                 
                 # Check magnitude filter
                 magnitude_str = earthquake_info.get("mag")
-                if magnitude_str and magnitude_str != "--":
+                if magnitude_str and magnitude_str != "--" and magnitude_str != "M不明":
                     try:
                         magnitude = float(magnitude_str)
                         if magnitude < min_magnitude:
@@ -108,25 +105,18 @@ class JMABosaiApiClient:
                     except ValueError:
                         continue
                 
-                # Check intensity filter using 'maxi' field (maximum intensity)
-                max_intensity_code = earthquake_info.get("maxi", "0")
-                if not self._intensity_meets_threshold(max_intensity_code, min_intensity):
-                    continue
+                _LOGGER.debug(f"Earthquake passed filters: {earthquake_info.get('anm')} M{magnitude_str}")
                 
-                _LOGGER.debug(f"Earthquake passed filters: {earthquake_info.get('anm')} M{magnitude_str} Max震度{max_intensity_code}")
-                
-                # Get detailed earthquake data
-                earthquake_data = await self._get_earthquake_details(earthquake_info)
-                if earthquake_data:
-                    # Add list.json data for completeness
-                    earthquake_data.update({
-                        "list_report_datetime": earthquake_info.get("rdt"),
-                        "list_occurrence_time": earthquake_info.get("at"),
-                        "list_area_name": earthquake_info.get("anm"),
-                        "list_magnitude": magnitude_str,
-                        "list_max_intensity": max_intensity_code,
-                    })
-                    filtered_earthquakes.append(earthquake_data)
+                # Create simplified earthquake data from list.json only
+                earthquake_data = {
+                    "event_id": earthquake_info.get("eid", ""),
+                    "report_datetime": earthquake_info.get("rdt", ""),
+                    "origin_time": earthquake_info.get("at", ""),
+                    "hypocenter": earthquake_info.get("anm", ""),
+                    "magnitude": magnitude_str if magnitude_str and magnitude_str != "--" else None,
+                    "status": "地震発生"
+                }
+                filtered_earthquakes.append(earthquake_data)
                 
                 # Limit to reasonable number
                 if len(filtered_earthquakes) >= 50:
@@ -147,10 +137,10 @@ class JMABosaiApiClient:
         recent_earthquakes = []
         for eq in filtered_earthquakes[:10]:
             recent_eq = {
-                "report_datetime": eq.get("report_datetime", eq.get("list_report_datetime", "")),
-                "hypocenter": eq.get("hypocenter", eq.get("list_area_name", "")),
-                "magnitude": eq.get("magnitude", eq.get("list_magnitude", "")),
-                "origin_time": eq.get("origin_time", eq.get("list_occurrence_time", "")),
+                "report_datetime": eq.get("report_datetime", ""),
+                "hypocenter": eq.get("hypocenter", ""),
+                "magnitude": eq.get("magnitude", ""),
+                "origin_time": eq.get("origin_time", ""),
                 "event_id": eq.get("event_id", ""),
             }
             recent_earthquakes.append(recent_eq)
@@ -162,45 +152,9 @@ class JMABosaiApiClient:
             "recent_earthquakes": recent_earthquakes,
             "time_range_hours": time_range_hours,
             "min_magnitude": min_magnitude,
-            "min_intensity": min_intensity,
             "status": "正常" if filtered_earthquakes else "該当なし"
         }
 
-    def _intensity_meets_threshold(self, intensity_code: str, min_intensity: str) -> bool:
-        """Check if intensity meets minimum threshold."""
-        if min_intensity == "0":
-            return True
-            
-        # Convert intensity codes to numeric values for comparison
-        intensity_values = {
-            "1": 1, "2": 2, "3": 3, "4": 4,
-            "5-": 5, "5+": 6, "6-": 7, "6+": 8, "7": 9
-        }
-        
-        current_value = intensity_values.get(intensity_code, 0)
-        threshold_value = intensity_values.get(min_intensity, 0)
-        
-        return current_value >= threshold_value
-
-    async def _get_earthquake_details(self, earthquake_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Get detailed earthquake information."""
-        try:
-            json_file = earthquake_info.get("json")
-            if not json_file:
-                return None
-
-            url = f"{JMA_BOSAI_EARTHQUAKE_URL}/{json_file}"
-            async with async_timeout.timeout(30):
-                async with self._session.get(url) as response:
-                    if response.status == 200:
-                        data = await response.json()
-                        return self._process_earthquake_data(data)
-                    else:
-                        _LOGGER.error(f"Failed to get earthquake details: {response.status}")
-                        return None
-        except Exception as e:
-            _LOGGER.error(f"Error getting earthquake details: {e}")
-            return None
 
     def _process_warning_data(self, data: Dict[str, Any], target_area_code: str, city_area_code: str = None) -> Dict[str, Any]:
         """Process warning data into structured format."""
@@ -326,104 +280,3 @@ class JMABosaiApiClient:
         
         return warning_info
 
-    def _process_earthquake_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Process earthquake data into structured format."""
-        processed_data = {
-            "status": "地震情報なし",
-            "event_id": "",
-            "report_datetime": None,
-            "origin_time": None,
-            "hypocenter": "",
-            "magnitude": None,
-            "depth": None,
-            "max_intensity": "",
-            "max_intensity_code": "",
-            "intensity_areas": [],
-            "raw_data": data,
-        }
-
-        if not data:
-            return processed_data
-
-        # Extract basic information from Head section (JMA BOSAI JSON format)
-        head = data.get("Head", {})
-        if head:
-            event_id = head.get("EventID", "")
-            if event_id:
-                processed_data["event_id"] = event_id
-
-            report_datetime = head.get("ReportDateTime")
-            if report_datetime:
-                processed_data["report_datetime"] = report_datetime
-
-        # Extract earthquake details from Body.Earthquake (JMA BOSAI JSON format)
-        body = data.get("Body", {})
-        earthquake = body.get("Earthquake", {}) if body else {}
-        
-        if earthquake:
-            # Origin time
-            origin_time = earthquake.get("OriginTime")
-            if origin_time:
-                processed_data["origin_time"] = origin_time
-
-            # Hypocenter information
-            hypocenter = earthquake.get("Hypocenter", {})
-            if hypocenter:
-                hypocenter_area = hypocenter.get("Area", {})
-                if hypocenter_area:
-                    hypocenter_name = hypocenter_area.get("Name", "")
-                    if hypocenter_name:
-                        processed_data["hypocenter"] = hypocenter_name
-                    
-                    # Coordinate information
-                    coordinate = hypocenter_area.get("Coordinate", {})
-                    if coordinate:
-                        depth = coordinate.get("Depth", {}).get("Value")
-                        if depth:
-                            processed_data["depth"] = f"{depth}km"
-
-            # Magnitude
-            magnitude = earthquake.get("Magnitude")
-            if magnitude and magnitude != "--":
-                processed_data["magnitude"] = magnitude
-
-        # Extract intensity information from Body.Intensity
-        intensity_info = body.get("Intensity", {}) if body else {}
-        if intensity_info:
-            observation = intensity_info.get("Observation", {})
-            if observation:
-                # Maximum intensity
-                max_intensity = observation.get("MaxInt")
-                if max_intensity:
-                    intensity_name = EARTHQUAKE_INTENSITY.get(max_intensity, f"震度{max_intensity}")
-                    processed_data["max_intensity"] = intensity_name
-                    processed_data["max_intensity_code"] = max_intensity
-                    processed_data["status"] = f"最大{intensity_name}"
-
-                # Extract intensity areas
-                intensity_areas = []
-                prefs = observation.get("Pref", [])
-                for pref in prefs:
-                    pref_name = pref.get("Name", "")
-                    areas = pref.get("Area", [])
-                    for area in areas:
-                        area_name = area.get("Name", "")
-                        max_int = area.get("MaxInt", "")
-                        if max_int:
-                            intensity_name = EARTHQUAKE_INTENSITY.get(max_int, f"震度{max_int}")
-                            intensity_areas.append({
-                                "prefecture": pref_name,
-                                "area": area_name,
-                                "intensity": intensity_name,
-                                "intensity_code": max_int,
-                            })
-
-                processed_data["intensity_areas"] = intensity_areas
-
-        # Set default status if not set
-        if processed_data["status"] == "地震情報なし" and processed_data["event_id"]:
-            processed_data["status"] = "地震発生"
-
-        _LOGGER.debug(f"Processed earthquake data: {processed_data['hypocenter']} M{processed_data['magnitude']} 最大{processed_data['max_intensity']}")
-
-        return processed_data

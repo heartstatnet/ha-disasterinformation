@@ -17,7 +17,6 @@ from .const import (
     INFORMATION_TYPES,
     EARTHQUAKE_TIME_RANGES,
     EARTHQUAKE_MIN_MAGNITUDES,
-    EARTHQUAKE_MIN_INTENSITIES,
     CONF_INFORMATION_TYPE,
     CONF_REGION,
     CONF_PREFECTURE,
@@ -25,7 +24,6 @@ from .const import (
     CONF_AREA_CODE,
     CONF_UPDATE_INTERVAL,
     CONF_EARTHQUAKE_MIN_MAGNITUDE,
-    CONF_EARTHQUAKE_MIN_INTENSITY,
     CONF_EARTHQUAKE_TIME_RANGE,
     DEFAULT_UPDATE_INTERVAL,
     MIN_UPDATE_INTERVAL,
@@ -54,7 +52,6 @@ class DisasterInformationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._area_manager: AreaManager | None = None
         self._earthquake_time_range: str = "24"
         self._earthquake_min_magnitude: str = "0"
-        self._earthquake_min_intensity: str = "0"
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -112,13 +109,11 @@ class DisasterInformationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._earthquake_time_range = user_input.get(CONF_EARTHQUAKE_TIME_RANGE, "24")
             self._earthquake_min_magnitude = user_input.get(CONF_EARTHQUAKE_MIN_MAGNITUDE, "0")
-            self._earthquake_min_intensity = user_input.get(CONF_EARTHQUAKE_MIN_INTENSITY, "0")
             return await self.async_step_final()
 
         data_schema = vol.Schema({
             vol.Optional(CONF_EARTHQUAKE_TIME_RANGE, default="24"): vol.In(EARTHQUAKE_TIME_RANGES),
             vol.Optional(CONF_EARTHQUAKE_MIN_MAGNITUDE, default="0"): vol.In(EARTHQUAKE_MIN_MAGNITUDES),
-            vol.Optional(CONF_EARTHQUAKE_MIN_INTENSITY, default="0"): vol.In(EARTHQUAKE_MIN_INTENSITIES),
         })
 
         return self.async_show_form(
@@ -242,7 +237,6 @@ class DisasterInformationConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         CONF_UPDATE_INTERVAL: update_interval,
                         CONF_EARTHQUAKE_TIME_RANGE: self._earthquake_time_range,
                         CONF_EARTHQUAKE_MIN_MAGNITUDE: self._earthquake_min_magnitude,
-                        CONF_EARTHQUAKE_MIN_INTENSITY: self._earthquake_min_intensity,
                     },
                 )
             else:

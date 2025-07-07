@@ -159,7 +159,6 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
             "earthquake_count": data.get("count", 0),
             "time_range_hours": data.get("time_range_hours", 24),
             "min_magnitude": data.get("min_magnitude", 0.0),
-            "min_intensity": data.get("min_intensity", "0"),
             "status": data.get("status", "unknown"),
         }
         
@@ -171,10 +170,7 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
                     "origin_time": latest.get("origin_time", ""),
                     "report_datetime": latest.get("report_datetime", ""),
                     "hypocenter": latest.get("hypocenter", ""),
-                    "depth": latest.get("depth", ""),
                     "magnitude": latest.get("magnitude", ""),
-                    "max_intensity": latest.get("max_intensity", ""),
-                    "max_intensity_code": latest.get("max_intensity_code", ""),
                 }
             })
         

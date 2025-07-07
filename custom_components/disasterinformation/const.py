@@ -7,6 +7,7 @@ JMA_BOSAI_BASE_URL = "https://www.jma.go.jp/bosai"
 JMA_BOSAI_AREA_URL = f"{JMA_BOSAI_BASE_URL}/common/const/area.json"
 JMA_BOSAI_WARNING_URL = f"{JMA_BOSAI_BASE_URL}/warning/data/warning"
 JMA_BOSAI_EARTHQUAKE_URL = f"{JMA_BOSAI_BASE_URL}/quake/data"
+JMA_BOSAI_INFORMATION_URL = f"{JMA_BOSAI_BASE_URL}/information/data/information.json"
 
 # Default configuration
 DEFAULT_UPDATE_INTERVAL = 10  # minutes
@@ -36,7 +37,6 @@ INFORMATION_TYPES = {
 
 # Earthquake configuration
 CONF_EARTHQUAKE_MIN_MAGNITUDE = "earthquake_min_magnitude"
-CONF_EARTHQUAKE_MIN_INTENSITY = "earthquake_min_intensity"
 CONF_EARTHQUAKE_TIME_RANGE = "earthquake_time_range"
 
 # Earthquake filter options
@@ -53,15 +53,6 @@ EARTHQUAKE_MIN_MAGNITUDES = {
     "3.0": "M3.0以上",
     "4.0": "M4.0以上",
     "5.0": "M5.0以上"
-}
-
-EARTHQUAKE_MIN_INTENSITIES = {
-    "0": "すべて",
-    "1": "震度1以上",
-    "2": "震度2以上", 
-    "3": "震度3以上",
-    "4": "震度4以上",
-    "5-": "震度5弱以上"
 }
 
 # Warning types and codes - JMA公式警報コード対応表に基づく正確なマッピング
@@ -112,18 +103,6 @@ WARNING_SEVERITY = {
     "注意報": "advisory",
 }
 
-# Earthquake intensity levels
-EARTHQUAKE_INTENSITY = {
-    "1": "震度1",
-    "2": "震度2", 
-    "3": "震度3",
-    "4": "震度4",
-    "5-": "震度5弱",
-    "5+": "震度5強",
-    "6-": "震度6弱",
-    "6+": "震度6強",
-    "7": "震度7",
-}
 
 # JMA BOSAI API centers (地方コード) - 実際のarea.jsonから取得
 REGION_CODES = {
