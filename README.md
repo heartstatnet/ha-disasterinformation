@@ -116,7 +116,7 @@ A Home Assistant custom integration that provides real-time disaster information
 
 設定した地域ごとに、`[都道府県名] [市区町村名] 気象庁防災情報`という名前のデバイスが作成されます。
 
-#### 特別警報・警報・注意報センサー (`sensor.[地域名英語]_warnings_summary`)
+#### 特別警報・警報・注意報センサー (`sensor.[地域名英語]_weather_alert`)
 - **状態**: 発表中の特別警報・警報・注意報の概要（例：「雷注意報」、「大雨警報」、「特別警報(大雨)」、「発表なし」）
 - **主要属性**:
   - `warnings`: 警報のリスト（名前、重要度、地域コード、状態）
@@ -127,20 +127,16 @@ A Home Assistant custom integration that provides real-time disaster information
   - `last_update`: 最終更新時刻
 
 **エンティティ名の例**:
-- 北九州市: `sensor.fukuoka_kitakyushu_warnings_summary`
-- 那覇市: `sensor.okinawa_naha_warnings_summary`
-- 東京都千代田区: `sensor.tokyo_chiyoda_warnings_summary`
+- 北九州市: `sensor.fukuoka_kitakyushu_weather_alert`
+- 那覇市: `sensor.okinawa_naha_weather_alert`
+- 東京都千代田区: `sensor.tokyo_chiyoda_weather_alert`
 
 **対応するバイナリセンサー**:
 - 特別警報: `binary_sensor.[都道府県]_[市区町村]_special_warnings`
 - 警報: `binary_sensor.[都道府県]_[市区町村]_warnings`
 - 注意報: `binary_sensor.[都道府県]_[市区町村]_advisories`
 
-**命名規則**:
-- 都道府県・市区町村名は英語表記（接尾辞なし）
-- 例: 福岡県北九州市 → `fukuoka_kitakyushu`
-
-### 2. 地震情報エンティティ（全国対象）
+### 2. 地震情報エンティティ
 
 #### 地震情報センサー (`sensor.earthquake`)
 - **状態**: フィルタ条件に該当する地震数（例：「3件の地震」、「該当する地震なし」）
@@ -161,291 +157,81 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ## ダッシュボードカード
 
-防災情報を効果的に表示するためのカード設定例：
+### 気象警報・注意報カード
+北九州市の気象警報・注意報を表示します：
 
-### 専用カード
-
-#### 気象警報・注意報カード
-北九州市の気象警報・注意報を気象庁公式カラーで表示します（警報発表時のみ表示）：
+![気象警報・注意報カード](docs/images/weather_alert_card.jpg)
 
 ```yaml
 type: conditional
 conditions:
   - entity: sensor.fukuoka_kitakyushu_weather_alert
-    state_not: "発表なし"
-card:
-  type: markdown
-  title: 🌤️ 北九州市 気象警報・注意報
-  content: >
-    {% set weather_entity = 'sensor.fukuoka_kitakyushu_weather_alert' %}
-    {% set special_warning_entity = 'binary_sensor.fukuoka_kitakyushu_special_warning' %}
-    {% set warning_entity = 'binary_sensor.fukuoka_kitakyushu_warning' %}
-    {% set advisory_entity = 'binary_sensor.fukuoka_kitakyushu_advisory' %}
-
-    **現在の状況**: {{ states(weather_entity) }}
-
-    **最終更新**: {{ state_attr(weather_entity, 'last_update') or '取得中...' }}
-
-
-    {% set special_warnings = state_attr(weather_entity, 'special_warnings') %}
-    {% if special_warnings and special_warnings|length > 0 %}
-    <div style="background: #000000; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-    <div style="font-size: 16px; margin-bottom: 8px;">🚨 特別警報 ({{ special_warnings|length }}件)</div>
-    {% for warning in special_warnings %}
-    <div style="font-size: 14px;">• {{ warning }}</div>
-    {% endfor %}
-    </div>
-    {% endif %}
-
-    {% set warnings = state_attr(weather_entity, 'warnings') %}
-    {% if warnings and warnings|length > 0 %}
-    <div style="background: #663399; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-    <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報 ({{ warnings|length }}件)</div>
-    {% for warning in warnings %}
-    <div style="font-size: 14px;">• {{ warning }}</div>
-    {% endfor %}
-    </div>
-    {% endif %}
-
-    {% set advisories = state_attr(weather_entity, 'advisories') %}
-    {% if advisories and advisories|length > 0 %}
-    <div style="background: #FFFF00; color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-    <div style="font-size: 16px; margin-bottom: 8px;">🟡 注意報 ({{ advisories|length }}件)</div>
-    {% for advisory in advisories %}
-    <div style="font-size: 14px;">• {{ advisory }}</div>
-    {% endfor %}
-    </div>
-    {% endif %}
-
-    ---
-    
-    **発表状況**:
-    - 特別警報: {{ 'ON' if is_state(special_warning_entity, 'on') else 'OFF' }}
-    - 警報: {{ 'ON' if is_state(warning_entity, 'on') else 'OFF' }}
-    - 注意報: {{ 'ON' if is_state(advisory_entity, 'on') else 'OFF' }}
-```
-
-#### 地震情報カード
-直近24時間の地震情報を詳細表示します：
-
-```yaml
-type: markdown
-title: 🌍 地震情報 (直近24時間)
-content: >
-  {% set earthquake_entity = 'sensor.earthquake_information' %}
-  {% set detection_entity = 'binary_sensor.earthquake_detection' %}
-
-  **現在の状況**: {{ states(earthquake_entity) }}
-
-  **地震検知状態**: {{ '🔴 ON' if is_state(detection_entity, 'on') else '🟢 OFF' }}
-
-  **検索条件**:
-  - 時間範囲: {{ state_attr(earthquake_entity, 'time_range_hours') }}時間
-  - 最小マグニチュード: M{{ state_attr(earthquake_entity, 'min_magnitude') }}
-  - ステータス: {{ state_attr(earthquake_entity, 'status') }}
-
-  ---
-
-  {% set latest_earthquake = state_attr(earthquake_entity, 'latest_earthquake') %}
-  {% if latest_earthquake %}
-  **最新地震**:
-  - 発生時刻: {{ latest_earthquake.origin_time }}
-  - 震源地: {{ latest_earthquake.hypocenter }}
-  - マグニチュード: M{{ latest_earthquake.magnitude }}
-  - 発表時刻: {{ latest_earthquake.report_datetime }}
-  
-  ---
-  {% endif %}
-
-  {% set recent_earthquakes = state_attr(earthquake_entity, 'recent_earthquakes') %}
-  {% if recent_earthquakes and recent_earthquakes|length > 0 %}
-  **直近の地震一覧**:
-  
-  | 発表時刻 | 震源地 | マグニチュード |
-  |----------|--------|----------------|
-  {% for eq in recent_earthquakes %}
-  | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
-  {% endfor %}
-  
-  ---
-  
-  **統計情報**:
-  - 該当地震数: {{ state_attr(earthquake_entity, 'earthquake_count') }}件
-  - 最大マグニチュード: M{{ recent_earthquakes | map(attribute='magnitude') | map('float') | max }}
-  - 最小マグニチュード: M{{ recent_earthquakes | map(attribute='magnitude') | map('float') | min }}
-  {% else %}
-  **直近の地震**: 該当する地震はありません
-  {% endif %}
-
-  ---
-  
-  **データ更新時刻**: {{ as_timestamp(now()) | timestamp_custom('%Y/%m/%d %H:%M:%S') }}
-```
-
-### 総合カード例
-
-### 1. 総合防災情報カード
-
-気象警報・注意報と地震情報を統合表示する総合カードです。警報発表時のみ表示されます。
-
-```yaml
-type: conditional
-conditions:
-  - entity: sensor.fukuoka_kitakyushu_warnings_summary
     state_not: 発表なし
 card:
   type: markdown
-  title: 🚨 福岡県 北九州市 防災情報
+  title: 🌤️ 北九州市 気象情報
   content: >
-    {% set entity = 'sensor.fukuoka_kitakyushu_warnings_summary'
+    {% set weather_entity = 'sensor.fukuoka_kitakyushu_weather_alert' %} {% set
+    special_warning_entity = 'binary_sensor.fukuoka_kitakyushu_special_warning'
+    %} {% set warning_entity = 'binary_sensor.fukuoka_kitakyushu_warning' %} {%
+    set advisory_entity = 'binary_sensor.fukuoka_kitakyushu_advisory' %}
+
+
+    {% set special_warnings = state_attr(weather_entity, 'special_warnings') %}
+    {% if special_warnings and special_warnings|length > 0 %} <div
+    style="background: #000000; color: white; padding: 12px; border-radius: 8px;
+    margin: 8px 0; font-weight: bold;"> <div style="font-size: 16px;
+    margin-bottom: 8px;">🚨 特別警報 ({{ special_warnings|length }}件)</div> {% for
+    warning in special_warnings %} <div style="font-size: 14px;">• {{ warning
+    }}</div> {% endfor %} </div> {% endif %}
+
+    {% set warnings = state_attr(weather_entity, 'warnings') %} {% if warnings
+    and warnings|length > 0 %} <div style="background: #663399; color: white;
+    padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;"> <div
+    style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報 ({{ warnings|length
+    }}件)</div> {% for warning in warnings %} <div style="font-size: 14px;">• {{
+    warning }}</div> {% endfor %} </div> {% endif %}
+
+    {% set advisories = state_attr(weather_entity, 'advisories') %} {% if
+    advisories and advisories|length > 0 %} <div style="background: #FFFF00;
+    color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0;
+    font-weight: bold;"> <div style="font-size: 16px; margin-bottom: 8px;">🟡
+    注意報 ({{ advisories|length }}件)</div> {% for advisory in advisories %} <div
+    style="font-size: 14px;">• {{ advisory }}</div> {% endfor %} </div> {% endif
     %}
 
-    {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
-
-    {% set warnings = state_attr(entity, 'warnings') %}
-
-    {% set advisories = state_attr(entity, 'advisories') %}
-
-    {% set total_count = state_attr(entity, 'warning_count') %}
-
-
-    **現在の状況**: {{ states(entity) }}  
-
-    **合計**: {{ total_count }}件の警報・注意報
-
-
-    {% set special_warnings = state_attr(entity, 'special_warnings') %}
-    {% if special_warnings and special_warnings|length > 0 %}
-
-    ### 🔴 特別警報 ({{ special_warnings|length }}件)
-
-    {% for warning in special_warnings %}
-
-    - **{{ warning }}**
-
-    {% endfor %}
-
-    {% endif %}
-
-
-    {% set warnings = state_attr(entity, 'warnings') %}
-    {% if warnings and warnings|length > 0 %}
-
-    ### 🟠 警報 ({{ warnings|length }}件)
-
-    {% for warning in warnings %}
-
-    - **{{ warning }}**
-
-    {% endfor %}
-
-    {% endif %}
-
-
-    {% set advisories = state_attr(entity, 'advisories') %}
-    {% if advisories and advisories|length > 0 %}
-
-    ### 🟡 注意報 ({{ advisories|length }}件)
-
-    {% for advisory in advisories %}
-
-    - {{ advisory }}
-
-    {% endfor %}
-
-    {% endif %}
-
-
-    {% set earthquakes = state_attr('sensor.earthquake', 'recent_earthquakes') %}
-    {% if earthquakes %}
-      {% set ns = namespace(recent_eq=[]) %}
-      {% for eq in earthquakes %}
-        {% set report_time = strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z') %}
-        {% set current_time = now() %}
-        {% set time_diff = (current_time - report_time).total_seconds() / 3600 %}
-        {% if time_diff <= 1 %}
-          {% set ns.recent_eq = ns.recent_eq + [eq] %}
-        {% endif %}
-      {% endfor %}
-      
-      {% if ns.recent_eq %}
-        | 時刻 | 震源地 | マグニチュード |
-        |------|--------|----------------|
-        {% for eq in ns.recent_eq %}
-        | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
-        {% endfor %}
-        
-        **{{ ns.recent_eq | length }}件の地震が過去1時間以内に発生**
-      {% else %}
-        ✅ 直近1時間以内に地震は発生していません
-      {% endif %}
-    {% else %}
-      ❌ 地震データを取得できませんでした
-    {% endif %}
 ```
 
-### 2. 防災ダッシュボード（詳細表示）
+### 地震情報カード
+直近24時間の地震情報を詳細表示します：
 
-気象警報と地震情報を分けて詳細表示するダッシュボードです。
+![地震情報カード](docs/images/earthquake_card.jpg)
 
 ```yaml
-type: vertical-stack
-cards:
-  - type: conditional
-    conditions:
-      - entity: sensor.fukuoka_kitakyushu_warnings_summary
-        state_not: 発表なし
-    card:
-      type: entities
-      title: ⚠️ 発表中の警報・注意報
-      entities:
-        - type: conditional
-          conditions:
-            - entity: binary_sensor.fukuoka_kitakyushu_special_warnings
-              state: "on"
-          row:
-            entity: binary_sensor.fukuoka_kitakyushu_special_warnings
-            name: "特別警報"
-            secondary_info: attribute
-            attribute: warning_types
-        - type: conditional
-          conditions:
-            - entity: binary_sensor.fukuoka_kitakyushu_warnings
-              state: "on"
-          row:
-            entity: binary_sensor.fukuoka_kitakyushu_warnings
-            name: "警報"
-            secondary_info: attribute
-            attribute: warning_types
-        - type: conditional
-          conditions:
-            - entity: binary_sensor.fukuoka_kitakyushu_advisories
-              state: "on"
-          row:
-            entity: binary_sensor.fukuoka_kitakyushu_advisories
-            name: "注意報"
-            secondary_info: attribute
-            attribute: warning_types
-      show_header_toggle: false
-  - type: markdown
-    title: 📊 最新10件の地震情報
-    content: >
-      {% set earthquakes = state_attr('sensor.earthquake',
-      'recent_earthquakes') %}
+type: markdown
+title: 🌍 地震情報
+content: >
+  {% set earthquake_entity = 'sensor.earthquake_information' %} {% set
+  detection_entity = 'binary_sensor.earthquake_detection' %}
 
-      {% if earthquakes %}
-        | 報告日時 | 震源地 | M |
-        |----------|--------|---|
-        {% for eq in earthquakes[:5] %}
-        | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | {{ eq.magnitude }} |
-        {% endfor %}
-        
-        {% if earthquakes | length > 5 %}
-        *他{{ earthquakes | length - 5 }}件の地震情報あり*
-        {% endif %}
-      {% else %}
-        データなし
-      {% endif %}
+
+  {% set recent_earthquakes = state_attr(earthquake_entity,
+  'recent_earthquakes') %} {% if recent_earthquakes and
+  recent_earthquakes|length > 0 %}
+
+
+  | 発表時刻 | 震源地 | マグニチュード |
+
+  |----------|--------|----------------|
+
+  {% for eq in recent_earthquakes -%}
+
+  | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) |
+  timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }}
+  |
+
+  {% endfor %} {% else %} **直近の地震**: 該当する地震はありません {% endif %}
+
 ```
 
 ## データソース
