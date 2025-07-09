@@ -163,6 +163,127 @@ A Home Assistant custom integration that provides real-time disaster information
 
 防災情報を効果的に表示するためのカード設定例：
 
+### 専用カード
+
+#### 気象警報・注意報カード
+北九州市の気象警報・注意報を気象庁公式カラーで表示します（警報発表時のみ表示）：
+
+```yaml
+type: conditional
+conditions:
+  - entity: sensor.fukuoka_kitakyushu_weather_alert
+    state_not: "発表なし"
+card:
+  type: markdown
+  title: 🌤️ 北九州市 気象警報・注意報
+  content: >
+    {% set weather_entity = 'sensor.fukuoka_kitakyushu_weather_alert' %}
+    {% set special_warning_entity = 'binary_sensor.fukuoka_kitakyushu_special_warning' %}
+    {% set warning_entity = 'binary_sensor.fukuoka_kitakyushu_warning' %}
+    {% set advisory_entity = 'binary_sensor.fukuoka_kitakyushu_advisory' %}
+
+    **現在の状況**: {{ states(weather_entity) }}
+
+    **最終更新**: {{ state_attr(weather_entity, 'last_update') or '取得中...' }}
+
+
+    {% set special_warnings = state_attr(weather_entity, 'special_warnings') %}
+    {% if special_warnings and special_warnings|length > 0 %}
+    <div style="background: #000000; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">🚨 特別警報 ({{ special_warnings|length }}件)</div>
+    {% for warning in special_warnings %}
+    <div style="font-size: 14px;">• {{ warning }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set warnings = state_attr(weather_entity, 'warnings') %}
+    {% if warnings and warnings|length > 0 %}
+    <div style="background: #663399; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報 ({{ warnings|length }}件)</div>
+    {% for warning in warnings %}
+    <div style="font-size: 14px;">• {{ warning }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set advisories = state_attr(weather_entity, 'advisories') %}
+    {% if advisories and advisories|length > 0 %}
+    <div style="background: #FFFF00; color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">🟡 注意報 ({{ advisories|length }}件)</div>
+    {% for advisory in advisories %}
+    <div style="font-size: 14px;">• {{ advisory }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    ---
+    
+    **発表状況**:
+    - 特別警報: {{ 'ON' if is_state(special_warning_entity, 'on') else 'OFF' }}
+    - 警報: {{ 'ON' if is_state(warning_entity, 'on') else 'OFF' }}
+    - 注意報: {{ 'ON' if is_state(advisory_entity, 'on') else 'OFF' }}
+```
+
+#### 地震情報カード
+直近24時間の地震情報を詳細表示します：
+
+```yaml
+type: markdown
+title: 🌍 地震情報 (直近24時間)
+content: >
+  {% set earthquake_entity = 'sensor.earthquake_information' %}
+  {% set detection_entity = 'binary_sensor.earthquake_detection' %}
+
+  **現在の状況**: {{ states(earthquake_entity) }}
+
+  **地震検知状態**: {{ '🔴 ON' if is_state(detection_entity, 'on') else '🟢 OFF' }}
+
+  **検索条件**:
+  - 時間範囲: {{ state_attr(earthquake_entity, 'time_range_hours') }}時間
+  - 最小マグニチュード: M{{ state_attr(earthquake_entity, 'min_magnitude') }}
+  - ステータス: {{ state_attr(earthquake_entity, 'status') }}
+
+  ---
+
+  {% set latest_earthquake = state_attr(earthquake_entity, 'latest_earthquake') %}
+  {% if latest_earthquake %}
+  **最新地震**:
+  - 発生時刻: {{ latest_earthquake.origin_time }}
+  - 震源地: {{ latest_earthquake.hypocenter }}
+  - マグニチュード: M{{ latest_earthquake.magnitude }}
+  - 発表時刻: {{ latest_earthquake.report_datetime }}
+  
+  ---
+  {% endif %}
+
+  {% set recent_earthquakes = state_attr(earthquake_entity, 'recent_earthquakes') %}
+  {% if recent_earthquakes and recent_earthquakes|length > 0 %}
+  **直近の地震一覧**:
+  
+  | 発表時刻 | 震源地 | マグニチュード |
+  |----------|--------|----------------|
+  {% for eq in recent_earthquakes %}
+  | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
+  {% endfor %}
+  
+  ---
+  
+  **統計情報**:
+  - 該当地震数: {{ state_attr(earthquake_entity, 'earthquake_count') }}件
+  - 最大マグニチュード: M{{ recent_earthquakes | map(attribute='magnitude') | map('float') | max }}
+  - 最小マグニチュード: M{{ recent_earthquakes | map(attribute='magnitude') | map('float') | min }}
+  {% else %}
+  **直近の地震**: 該当する地震はありません
+  {% endif %}
+
+  ---
+  
+  **データ更新時刻**: {{ as_timestamp(now()) | timestamp_custom('%Y/%m/%d %H:%M:%S') }}
+```
+
+### 総合カード例
+
 ### 1. 総合防災情報カード
 
 気象警報・注意報と地震情報を統合表示する総合カードです。警報発表時のみ表示されます。

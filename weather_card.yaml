@@ -1,0 +1,54 @@
+type: conditional
+conditions:
+  - entity: sensor.fukuoka_kitakyushu_weather_alert
+    state_not: "発表なし"
+card:
+  type: markdown
+  title: 🌤️ 北九州市 気象警報・注意報
+  content: >
+    {% set weather_entity = 'sensor.fukuoka_kitakyushu_weather_alert' %}
+    {% set special_warning_entity = 'binary_sensor.fukuoka_kitakyushu_special_warning' %}
+    {% set warning_entity = 'binary_sensor.fukuoka_kitakyushu_warning' %}
+    {% set advisory_entity = 'binary_sensor.fukuoka_kitakyushu_advisory' %}
+
+    **現在の状況**: {{ states(weather_entity) }}
+
+    **最終更新**: {{ state_attr(weather_entity, 'last_update') or '取得中...' }}
+
+
+    {% set special_warnings = state_attr(weather_entity, 'special_warnings') %}
+    {% if special_warnings and special_warnings|length > 0 %}
+    <div style="background: #000000; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">🚨 特別警報 ({{ special_warnings|length }}件)</div>
+    {% for warning in special_warnings %}
+    <div style="font-size: 14px;">• {{ warning }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set warnings = state_attr(weather_entity, 'warnings') %}
+    {% if warnings and warnings|length > 0 %}
+    <div style="background: #663399; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報 ({{ warnings|length }}件)</div>
+    {% for warning in warnings %}
+    <div style="font-size: 14px;">• {{ warning }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    {% set advisories = state_attr(weather_entity, 'advisories') %}
+    {% if advisories and advisories|length > 0 %}
+    <div style="background: #FFFF00; color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
+    <div style="font-size: 16px; margin-bottom: 8px;">🟡 注意報 ({{ advisories|length }}件)</div>
+    {% for advisory in advisories %}
+    <div style="font-size: 14px;">• {{ advisory }}</div>
+    {% endfor %}
+    </div>
+    {% endif %}
+
+    ---
+    
+    **発表状況**:
+    - 特別警報: {{ 'ON' if is_state(special_warning_entity, 'on') else 'OFF' }}
+    - 警報: {{ 'ON' if is_state(warning_entity, 'on') else 'OFF' }}
+    - 注意報: {{ 'ON' if is_state(advisory_entity, 'on') else 'OFF' }}
