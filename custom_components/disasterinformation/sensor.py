@@ -47,9 +47,8 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._config_entry = config_entry
         prefecture_en, city_en = get_english_name(config_entry.data['prefecture'], config_entry.data['city'])
-        self._attr_name = f"{prefecture_en} {city_en} {ENTITY_NAME_WARNING}"
-        entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
-        self._attr_unique_id = f"{entity_prefix}_warnings_summary"
+        self._attr_name = f"{prefecture_en} {city_en} Weather Alert"
+        self._attr_unique_id = f"{prefecture_en.lower()}_{city_en.lower()}_weather_alert"
 
     @property
     def state(self) -> str:
@@ -147,7 +146,7 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._attr_name = ENTITY_NAME_EARTHQUAKE
-        self._attr_unique_id = "earthquake"
+        self._attr_unique_id = "earthquake_information"
 
     @property
     def state(self) -> str:

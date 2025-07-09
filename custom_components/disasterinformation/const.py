@@ -14,7 +14,7 @@ DEFAULT_UPDATE_INTERVAL = 10  # minutes
 MIN_UPDATE_INTERVAL = 5  # minutes
 
 # Entity names
-ENTITY_NAME_WARNING = "Weather Warning"
+ENTITY_NAME_WARNING = "Weather Alert"
 ENTITY_NAME_EARTHQUAKE = "Earthquake Information"
 
 # Configuration keys
