@@ -961,6 +961,31 @@ CITY_MAP = {
 
 
 
+def get_english_name(prefecture: str, city: str) -> tuple[str, str]:
+    """Get English names for prefecture and city."""
+    # Convert prefecture to English  
+    prefecture_en = PREFECTURE_MAP.get(prefecture, prefecture.replace('県', '').replace('府', '').replace('都', '').replace('道', ''))
+    
+    # For cities, use mapping if available, otherwise use simplified fallback
+    if city in CITY_MAP:
+        city_en = CITY_MAP[city]
+        # Remove suffix from mapped cities for consistency
+        if city_en.endswith(('shi', 'cho', 'mura', 'ku')):
+            if city_en.endswith('shi'):
+                city_en = city_en[:-3]  # Remove 'shi'
+            elif city_en.endswith('cho'):
+                city_en = city_en[:-3]  # Remove 'cho'
+            elif city_en.endswith('mura'):
+                city_en = city_en[:-4]  # Remove 'mura'
+            elif city_en.endswith('ku'):
+                city_en = city_en[:-2]  # Remove 'ku'
+    else:
+        # Simple fallback for unmapped cities - use lowercase romaji without suffix
+        city_en = city.replace('市', '').replace('町', '').replace('村', '').replace('区', '').lower()
+    
+    return prefecture_en.title(), city_en.title()
+
+
 def get_entity_prefix(prefecture: str, city: str) -> str:
     """Generate English entity prefix from prefecture and city."""
     # Convert prefecture to English

@@ -14,8 +14,8 @@ DEFAULT_UPDATE_INTERVAL = 10  # minutes
 MIN_UPDATE_INTERVAL = 5  # minutes
 
 # Entity names
-ENTITY_NAME_WARNING = "警報・注意報"
-ENTITY_NAME_EARTHQUAKE = "地震情報"
+ENTITY_NAME_WARNING = "Weather Warning"
+ENTITY_NAME_EARTHQUAKE = "Earthquake Information"
 
 # Configuration keys
 CONF_INFORMATION_TYPE = "information_type"

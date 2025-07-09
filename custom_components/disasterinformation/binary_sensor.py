@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, INFO_TYPE_EARTHQUAKE, INFO_TYPE_WEATHER_WARNING
-from .area_mapping import get_entity_prefix
+from .area_mapping import get_entity_prefix, get_english_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,7 +50,8 @@ class DisasterSpecialWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"{config_entry.data['prefecture']} {config_entry.data['city']} 特別警報"
+        prefecture_en, city_en = get_english_name(config_entry.data['prefecture'], config_entry.data['city'])
+        self._attr_name = f"{prefecture_en} {city_en} Special Warning"
         entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
         self._attr_unique_id = f"{entity_prefix}_special_warnings"
         self._attr_device_class = BinarySensorDeviceClass.SAFETY
@@ -92,7 +93,8 @@ class DisasterWarningBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"{config_entry.data['prefecture']} {config_entry.data['city']} 警報"
+        prefecture_en, city_en = get_english_name(config_entry.data['prefecture'], config_entry.data['city'])
+        self._attr_name = f"{prefecture_en} {city_en} Warning"
         entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
         self._attr_unique_id = f"{entity_prefix}_warnings"
         self._attr_device_class = BinarySensorDeviceClass.SAFETY
@@ -138,7 +140,8 @@ class DisasterAdvisoryBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"{config_entry.data['prefecture']} {config_entry.data['city']} 注意報"
+        prefecture_en, city_en = get_english_name(config_entry.data['prefecture'], config_entry.data['city'])
+        self._attr_name = f"{prefecture_en} {city_en} Advisory"
         entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
         self._attr_unique_id = f"{entity_prefix}_advisories"
         self._attr_device_class = BinarySensorDeviceClass.SAFETY
@@ -180,7 +183,7 @@ class DisasterEarthquakeBinarySensor(CoordinatorEntity, BinarySensorEntity):
         """Initialize the binary sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"地震検知"
+        self._attr_name = "Earthquake Detection"
         self._attr_unique_id = "earthquake_detected"
         self._attr_device_class = BinarySensorDeviceClass.SAFETY
         self._last_earthquake_time = None

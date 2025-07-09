@@ -11,7 +11,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, ENTITY_NAME_WARNING, ENTITY_NAME_EARTHQUAKE, INFO_TYPE_EARTHQUAKE, INFO_TYPE_WEATHER_WARNING
-from .area_mapping import get_entity_prefix
+from .area_mapping import get_entity_prefix, get_english_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -46,7 +46,8 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"{config_entry.data['prefecture']} {config_entry.data['city']} {ENTITY_NAME_WARNING}"
+        prefecture_en, city_en = get_english_name(config_entry.data['prefecture'], config_entry.data['city'])
+        self._attr_name = f"{prefecture_en} {city_en} {ENTITY_NAME_WARNING}"
         entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
         self._attr_unique_id = f"{entity_prefix}_warnings_summary"
 
@@ -145,7 +146,7 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._attr_name = f"{ENTITY_NAME_EARTHQUAKE}"
+        self._attr_name = ENTITY_NAME_EARTHQUAKE
         self._attr_unique_id = "earthquake"
 
     @property
