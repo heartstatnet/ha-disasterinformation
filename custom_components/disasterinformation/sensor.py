@@ -192,13 +192,21 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
             })
         
         # Add recent earthquakes list (10 most recent with report_datetime, hypocenter, magnitude only)
+        # Filter out earthquakes without hypocenter data
         recent_earthquakes = data.get("recent_earthquakes", [])
         formatted_recent = []
         for eq in recent_earthquakes:
+            hypocenter = eq.get("hypocenter", "")
+            magnitude = eq.get("magnitude")
+            
+            # Skip earthquakes without hypocenter or magnitude data
+            if not hypocenter or not magnitude:
+                continue
+                
             formatted_recent.append({
                 "report_datetime": eq.get("report_datetime", ""),
-                "hypocenter": eq.get("hypocenter", ""),
-                "magnitude": eq.get("magnitude", ""),
+                "hypocenter": hypocenter,
+                "magnitude": magnitude,
             })
         
         attributes["recent_earthquakes"] = formatted_recent

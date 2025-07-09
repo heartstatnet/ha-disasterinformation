@@ -93,6 +93,11 @@ class JMABosaiApiClient:
                     if origin_time.replace(tzinfo=None) < time_threshold:
                         continue
                 
+                # Check if hypocenter (anm) exists and is not empty
+                hypocenter = earthquake_info.get("anm", "")
+                if not hypocenter:
+                    continue
+                
                 # Check magnitude filter
                 magnitude_str = earthquake_info.get("mag")
                 if magnitude_str and magnitude_str != "--" and magnitude_str != "M不明":
@@ -102,6 +107,9 @@ class JMABosaiApiClient:
                             continue
                     except ValueError:
                         continue
+                else:
+                    # Skip earthquakes without valid magnitude
+                    continue
                 
                 _LOGGER.debug(f"Earthquake passed filters: {earthquake_info.get('anm')} M{magnitude_str}")
                 
@@ -134,10 +142,17 @@ class JMABosaiApiClient:
         # Create recent earthquakes list (last 10 with essential info only)
         recent_earthquakes = []
         for eq in filtered_earthquakes[:10]:
+            hypocenter = eq.get("hypocenter", "")
+            magnitude = eq.get("magnitude", "")
+            
+            # Skip earthquakes without hypocenter or magnitude
+            if not hypocenter or not magnitude:
+                continue
+            
             recent_eq = {
                 "report_datetime": eq.get("report_datetime", ""),
-                "hypocenter": eq.get("hypocenter", ""),
-                "magnitude": eq.get("magnitude", ""),
+                "hypocenter": hypocenter,
+                "magnitude": magnitude,
                 "origin_time": eq.get("origin_time", ""),
                 "event_id": eq.get("event_id", ""),
             }
