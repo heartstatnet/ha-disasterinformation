@@ -116,7 +116,7 @@ A Home Assistant custom integration that provides real-time disaster information
 
 設定した地域ごとに、`[都道府県名] [市区町村名] 気象庁防災情報`という名前のデバイスが作成されます。
 
-#### 特別警報・警報・注意報センサー (`sensor.[地域名中国語音写]_jing_bao_zhu_yi_bao`)
+#### 特別警報・警報・注意報センサー (`sensor.[地域名英語]_warnings_summary`)
 - **状態**: 発表中の特別警報・警報・注意報の概要（例：「雷注意報」、「大雨警報」、「特別警報(大雨)」、「発表なし」）
 - **主要属性**:
   - `warnings`: 警報のリスト（名前、重要度、地域コード、状態）
@@ -127,13 +127,22 @@ A Home Assistant custom integration that provides real-time disaster information
   - `last_update`: 最終更新時刻
 
 **エンティティ名の例**:
-- 北九州市: `sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao`
-- 那覇市: `sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao`
-- 東京都千代田区: `sensor.dong_jing_du_qian_dai_tian_qu_jing_bao_zhu_yi_bao`
+- 北九州市: `sensor.fukuoka_kitakyushu_warnings_summary`
+- 那覇市: `sensor.okinawa_naha_warnings_summary`
+- 東京都千代田区: `sensor.tokyo_chiyoda_warnings_summary`
+
+**対応するバイナリセンサー**:
+- 特別警報: `binary_sensor.[都道府県]_[市区町村]_special_warnings`
+- 警報: `binary_sensor.[都道府県]_[市区町村]_warnings`
+- 注意報: `binary_sensor.[都道府県]_[市区町村]_advisories`
+
+**命名規則**:
+- 都道府県・市区町村名は英語表記（接尾辞なし）
+- 例: 福岡県北九州市 → `fukuoka_kitakyushu`
 
 ### 2. 地震情報エンティティ（全国対象）
 
-#### 地震情報センサー (`sensor.di_zhen_qing_bao`)
+#### 地震情報センサー (`sensor.[地域名英語]_earthquake`)
 - **状態**: フィルタ条件に該当する地震数（例：「3件の地震」、「該当する地震なし」）
 - **主要属性**:
   - `recent_earthquakes`: **直近10件の地震情報**
@@ -149,109 +158,155 @@ A Home Assistant custom integration that provides real-time disaster information
 
 防災情報を効果的に表示するためのカード設定例：
 
-### 1. 気象情報カード（基本）
+### 1. 総合防災情報カード
 
-設定した地域の特別警報・警報・注意報を表示します。
-
-```yaml
-type: entity
-entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-name: 特別警報・警報・注意報
-icon: mdi:weather-lightning
-```
-
-### 2. 発表時のみ表示する条件付きカード
-
-特別警報・警報・注意報が発表されている時のみ表示されます。
+気象警報・注意報と地震情報を統合表示する総合カードです。警報発表時のみ表示されます。
 
 ```yaml
 type: conditional
 conditions:
-  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-    state_not: "発表なし"
+  - entity: sensor.fukuoka_kitakyushu_warnings_summary
+    state_not: 発表なし
 card:
-  type: entities
-  title: ⚠️ 特別警報・警報・注意報発表中
-  entities:
-    - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-      name: 現在の状況
-  show_header_toggle: false
-```
+  type: markdown
+  title: 🚨 福岡県 北九州市 防災情報
+  content: >
+    {% set entity = 'sensor.fukuoka_kitakyushu_warnings_summary'
+    %}
 
-### 3. 直近1時間の地震情報カード（詳細）
+    {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
 
-直近1時間以内に発生した地震のみを表示する高度なカードです。
+    {% set warnings = state_attr(entity, 'warnings') %}
 
-```yaml
-type: markdown
-title: 🔍 直近1時間の地震情報
-content: |
-  {% set earthquakes = state_attr('sensor.di_zhen_qing_bao', 'recent_earthquakes') %}
-  {% if earthquakes %}
-    {% set ns = namespace(recent_eq=[]) %}
-    {% for eq in earthquakes %}
-      {% set report_time = strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z') %}
-      {% set current_time = now() %}
-      {% set time_diff = (current_time - report_time).total_seconds() / 3600 %}
-      {% if time_diff <= 1 %}
-        {% set ns.recent_eq = ns.recent_eq + [eq] %}
-      {% endif %}
+    {% set advisories = state_attr(entity, 'advisories') %}
+
+    {% set total_count = state_attr(entity, 'warning_count') %}
+
+
+    **現在の状況**: {{ states(entity) }}  
+
+    **合計**: {{ total_count }}件の警報・注意報
+
+
+    {% set special_warnings = state_attr(entity, 'special_warnings') %}
+    {% if special_warnings and special_warnings|length > 0 %}
+
+    ### 🔴 特別警報 ({{ special_warnings|length }}件)
+
+    {% for warning in special_warnings %}
+
+    - **{{ warning }}**
+
     {% endfor %}
-    
-    {% if ns.recent_eq %}
-      | 時刻 | 震源地 | マグニチュード |
-      |------|--------|----------------|
-      {% for eq in ns.recent_eq %}
-      | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
+
+    {% endif %}
+
+
+    {% set warnings = state_attr(entity, 'warnings') %}
+    {% if warnings and warnings|length > 0 %}
+
+    ### 🟠 警報 ({{ warnings|length }}件)
+
+    {% for warning in warnings %}
+
+    - **{{ warning }}**
+
+    {% endfor %}
+
+    {% endif %}
+
+
+    {% set advisories = state_attr(entity, 'advisories') %}
+    {% if advisories and advisories|length > 0 %}
+
+    ### 🟡 注意報 ({{ advisories|length }}件)
+
+    {% for advisory in advisories %}
+
+    - {{ advisory }}
+
+    {% endfor %}
+
+    {% endif %}
+
+
+    {% set earthquakes = state_attr('sensor.fukuoka_kitakyushu_earthquake', 'recent_earthquakes') %}
+    {% if earthquakes %}
+      {% set ns = namespace(recent_eq=[]) %}
+      {% for eq in earthquakes %}
+        {% set report_time = strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z') %}
+        {% set current_time = now() %}
+        {% set time_diff = (current_time - report_time).total_seconds() / 3600 %}
+        {% if time_diff <= 1 %}
+          {% set ns.recent_eq = ns.recent_eq + [eq] %}
+        {% endif %}
       {% endfor %}
       
-      **{{ ns.recent_eq | length }}件の地震が過去1時間以内に発生**
+      {% if ns.recent_eq %}
+        | 時刻 | 震源地 | マグニチュード |
+        |------|--------|----------------|
+        {% for eq in ns.recent_eq %}
+        | {{ as_timestamp(strptime(eq.report_datetime, '%Y-%m-%dT%H:%M:%S%z')) | timestamp_custom('%m/%d %H:%M') }} | {{ eq.hypocenter }} | M{{ eq.magnitude }} |
+        {% endfor %}
+        
+        **{{ ns.recent_eq | length }}件の地震が過去1時間以内に発生**
+      {% else %}
+        ✅ 直近1時間以内に地震は発生していません
+      {% endif %}
     {% else %}
-      ✅ 直近1時間以内に地震は発生していません
+      ❌ 地震データを取得できませんでした
     {% endif %}
-  {% else %}
-    ❌ 地震データを取得できませんでした
-  {% endif %}
 ```
 
-### 4. 総合防災ダッシュボード
+### 2. 防災ダッシュボード（詳細表示）
 
-気象警報と地震情報を統合した総合ダッシュボードです。
+気象警報と地震情報を分けて詳細表示するダッシュボードです。
 
 ```yaml
 type: vertical-stack
 cards:
-  - type: horizontal-stack
-    cards:
-      - type: entity
-        entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-        name: 特別警報・警報・注意報
-        icon: mdi:weather-lightning
-      - type: entity
-        entity: sensor.di_zhen_qing_bao
-        name: 地震情報
-        icon: mdi:earth
-  
   - type: conditional
     conditions:
-      - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-        state_not: "発表なし"
+      - entity: sensor.fukuoka_kitakyushu_warnings_summary
+        state_not: 発表なし
     card:
       type: entities
-      title: ⚠️ 発表中の特別警報・警報・注意報
+      title: ⚠️ 発表中の警報・注意報
       entities:
-        - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-          attribute: warnings
-          name: 警報
-        - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-          attribute: advisories
-          name: 注意報
+        - type: conditional
+          conditions:
+            - entity: binary_sensor.fukuoka_kitakyushu_special_warnings
+              state: "on"
+          row:
+            entity: binary_sensor.fukuoka_kitakyushu_special_warnings
+            name: "特別警報"
+            secondary_info: attribute
+            attribute: warning_types
+        - type: conditional
+          conditions:
+            - entity: binary_sensor.fukuoka_kitakyushu_warnings
+              state: "on"
+          row:
+            entity: binary_sensor.fukuoka_kitakyushu_warnings
+            name: "警報"
+            secondary_info: attribute
+            attribute: warning_types
+        - type: conditional
+          conditions:
+            - entity: binary_sensor.fukuoka_kitakyushu_advisories
+              state: "on"
+          row:
+            entity: binary_sensor.fukuoka_kitakyushu_advisories
+            name: "注意報"
+            secondary_info: attribute
+            attribute: warning_types
       show_header_toggle: false
-  
   - type: markdown
     title: 📊 最新10件の地震情報
-    content: |
-      {% set earthquakes = state_attr('sensor.di_zhen_qing_bao', 'recent_earthquakes') %}
+    content: >
+      {% set earthquakes = state_attr('sensor.fukuoka_kitakyushu_earthquake',
+      'recent_earthquakes') %}
+
       {% if earthquakes %}
         | 報告日時 | 震源地 | M |
         |----------|--------|---|
@@ -266,223 +321,6 @@ cards:
         データなし
       {% endif %}
 ```
-
-### 5. 複数発表対応の詳細表示カード
-
-複数の特別警報・警報・注意報が同時に発表された場合に、種類別に美しく表示するカードです。
-
-```yaml
-type: conditional
-conditions:
-  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-    state_not: "発表なし"
-card:
-  type: markdown
-  title: 🚨 福岡県 北九州市 防災情報
-  content: |
-    {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
-    {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
-    {% set warnings = state_attr(entity, 'warnings') %}
-    {% set advisories = state_attr(entity, 'advisories') %}
-    {% set total_count = state_attr(entity, 'warning_count') %}
-    
-    **現在の状況**: {{ states(entity) }}  
-    **合計**: {{ total_count }}件の特別警報・警報・注意報
-    
-    {% if emergency_warnings and emergency_warnings|length > 0 %}
-    ### 🔴 特別警報 ({{ emergency_warnings|length }}件)
-    {% for warning in emergency_warnings %}
-    - **{{ warning }}**
-    {% endfor %}
-    {% endif %}
-    
-    {% if warnings and warnings|length > 0 %}
-    ### 🟠 警報 ({{ warnings|length }}件)
-    {% for warning in warnings %}
-    - **{{ warning }}**
-    {% endfor %}
-    {% endif %}
-    
-    {% if advisories and advisories|length > 0 %}
-    ### 🟡 注意報 ({{ advisories|length }}件)
-    {% for advisory in advisories %}
-    - {{ advisory }}
-    {% endfor %}
-    {% endif %}
-    
-    ---
-    *最終更新: {{ state_attr(entity, 'last_update') or '取得中...' }}*
-```
-
-### 6. 気象庁公式カラーによる警報カード
-
-気象庁公式の色指定に従った背景色表示で、重要度を視覚的に表現します。
-
-#### 基本的な警報カード（条件付き背景色）
-
-```yaml
-type: conditional
-conditions:
-  - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-    state_not: "発表なし"
-card:
-  type: entities
-  entities:
-    - entity: sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao
-      name: 特別警報・警報・注意報
-  style: |
-    {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
-    {% set has_special = state_attr(entity, 'has_special_warning') %}
-    {% set has_warning = state_attr(entity, 'has_warning') %}
-    {% set has_advisory = state_attr(entity, 'has_advisory') %}
-    {% if has_special %}
-      ha-card { background-color: #000000 !important; color: white !important; }
-    {% elif has_warning %}
-      ha-card { background-color: #663399 !important; color: white !important; }
-    {% elif has_advisory %}
-      ha-card { background-color: #FFFF00 !important; color: black !important; }
-    {% endif %}
-```
-
-#### 詳細な情報種別表示カード（JMA公式カラー対応）
-
-```yaml
-type: markdown
-title: 🛡️ 防災情報 (JMA公式カラー)
-content: |
-  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
-  {% set emergency_warnings = state_attr(entity, 'special_warnings') %}
-  {% set warnings = state_attr(entity, 'warnings') %}
-  {% set advisories = state_attr(entity, 'advisories') %}
-  {% set has_special = state_attr(entity, 'has_special_warning') %}
-  {% set has_warning = state_attr(entity, 'has_warning') %}
-  {% set has_advisory = state_attr(entity, 'has_advisory') %}
-  
-  <div style="margin: 10px 0;">
-  
-  {% if emergency_warnings and emergency_warnings|length > 0 %}
-  <div style="background: #000000; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 特別警報</div>
-  {% for warning in emergency_warnings %}
-  <div style="font-size: 14px;">• {{ warning }}</div>
-  {% endfor %}
-  </div>
-  {% endif %}
-  
-  {% if warnings and warnings|length > 0 %}
-  <div style="background: #663399; color: white; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 警報</div>
-  {% for warning in warnings %}
-  <div style="font-size: 14px;">• {{ warning }}</div>
-  {% endfor %}
-  </div>
-  {% endif %}
-  
-  {% if advisories and advisories|length > 0 %}
-  <div style="background: #FFFF00; color: #000000; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-  <div style="font-size: 16px; margin-bottom: 8px;">⚠️ 注意報</div>
-  {% for advisory in advisories %}
-  <div style="font-size: 14px;">• {{ advisory }}</div>
-  {% endfor %}
-  </div>
-  {% endif %}
-  
-  {% if (emergency_warnings|length + warnings|length + advisories|length) == 0 %}
-  <div style="background: #E8F5E8; color: #2E7D32; padding: 12px; border-radius: 8px; margin: 8px 0; font-weight: bold;">
-  <div style="font-size: 16px;">✅ 発表なし</div>
-  <div style="font-size: 14px;">現在、特別警報・警報・注意報は発表されていません</div>
-  </div>
-  {% endif %}
-  
-  </div>
-  
-  **地域**: {{ state_attr(entity, 'prefecture') }}{{ state_attr(entity, 'city') }}  
-  **合計**: {{ state_attr(entity, 'warning_count') or 0 }}件  
-  **最終更新**: {{ state_attr(entity, 'last_update') or '取得中...' }}
-
-style: |
-  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
-  {% set has_special = state_attr(entity, 'has_special_warning') %}
-  {% set has_warning = state_attr(entity, 'has_warning') %}
-  {% set has_advisory = state_attr(entity, 'has_advisory') %}
-  {% if has_special %}
-    ha-card { border-left: 5px solid #000000 !important; }
-  {% elif has_warning %}
-    ha-card { border-left: 5px solid #663399 !important; }
-  {% elif has_advisory %}
-    ha-card { border-left: 5px solid #FFFF00 !important; }
-  {% endif %}
-```
-
-#### コンパクトなステータスバー表示
-
-```yaml
-type: markdown
-content: |
-  {% set entity = 'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao' %}
-  {% set has_special = state_attr(entity, 'has_special_warning') %}
-  {% set has_warning = state_attr(entity, 'has_warning') %}
-  {% set has_advisory = state_attr(entity, 'has_advisory') %}
-  {% set state = states(entity) %}
-  
-  <div style="display: flex; align-items: center; padding: 8px; border-radius: 8px; 
-  {% if has_special %}background: #000000; color: white;
-  {% elif has_warning %}background: #663399; color: white;
-  {% elif has_advisory %}background: #FFFF00; color: black;
-  {% else %}background: #E8F5E8; color: #2E7D32;
-  {% endif %}">
-  <div style="font-weight: bold; margin-right: 12px;">
-  {% if has_special %}⚠️ 特別警報
-  {% elif has_warning %}⚠️ 警報
-  {% elif has_advisory %}⚠️ 注意報
-  {% else %}✅ 平常
-  {% endif %}
-  </div>
-  <div style="flex: 1;">{{ state }}</div>
-  <div style="font-size: 12px; opacity: 0.8;">{{ state_attr(entity, 'prefecture') }}{{ state_attr(entity, 'city') }}</div>
-  </div>
-```
-
-#### 複数地域の一覧表示（JMAカラー対応）
-
-```yaml
-type: markdown
-title: 🗾 防災情報マップ (JMA公式カラー)
-content: |
-  {% set regions = [
-    'sensor.fu_gang_xian_bei_jiu_zhou_shi_jing_bao_zhu_yi_bao',
-    'sensor.chong_sheng_xian_na_ba_shi_jing_bao_zhu_yi_bao'
-  ] %}
-  
-  <div style="display: grid; gap: 8px; margin: 10px 0;">
-  {% for entity in regions %}
-  {% if states(entity) != 'unavailable' %}
-  {% set has_special = state_attr(entity, 'has_special_warning') %}
-  {% set has_warning = state_attr(entity, 'has_warning') %}
-  {% set has_advisory = state_attr(entity, 'has_advisory') %}
-  {% set prefecture = state_attr(entity, 'prefecture') %}
-  {% set city = state_attr(entity, 'city') %}
-  {% set state = states(entity) %}
-  
-  <div style="display: flex; align-items: center; padding: 8px; border-radius: 6px; font-size: 14px;
-  {% if has_special %}background: #000000; color: white;
-  {% elif has_warning %}background: #663399; color: white;
-  {% elif has_advisory %}background: #FFFF00; color: black;
-  {% else %}background: #F5F5F5; color: #333;
-  {% endif %}">
-    <div style="font-weight: bold; min-width: 120px;">{{ prefecture }}{{ city }}</div>
-    <div style="margin-left: 12px;">{{ state }}</div>
-  </div>
-  {% endif %}
-  {% endfor %}
-  </div>
-```
-## JMA公式カラーコード
-
-- **特別警報**: `#000000` (黒背景、白文字)
-- **警報**: `#663399` (紫背景、白文字)  
-- **注意報**: `#FFFF00` (黄色背景、黒文字)
-- **発表なし**: `#E8F5E8` (薄緑背景、濃緑文字)
 
 ## データソース
 

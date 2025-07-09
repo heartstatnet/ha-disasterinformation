@@ -12,6 +12,108 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN, ENTITY_NAME_WARNING, ENTITY_NAME_EARTHQUAKE, INFO_TYPE_EARTHQUAKE, INFO_TYPE_WEATHER_WARNING
 
+
+def _get_entity_prefix(config_entry: ConfigEntry) -> str:
+    """Generate English entity prefix from prefecture and city."""
+    prefecture = config_entry.data.get('prefecture', '')
+    city = config_entry.data.get('city', '')
+    
+    # Simple romanization mapping for common prefectures/cities
+    prefecture_map = {
+        '福岡県': 'fukuoka',
+        '東京都': 'tokyo',
+        '大阪府': 'osaka',
+        '愛知県': 'aichi',
+        '神奈川県': 'kanagawa',
+        '埼玉県': 'saitama',
+        '千葉県': 'chiba',
+        '兵庫県': 'hyogo',
+        '北海道': 'hokkaido',
+        '宮城県': 'miyagi',
+        '広島県': 'hiroshima',
+        '京都府': 'kyoto',
+        '静岡県': 'shizuoka',
+        '岐阜県': 'gifu',
+        '茨城県': 'ibaraki',
+        '栃木県': 'tochigi',
+        '群馬県': 'gunma',
+        '新潟県': 'niigata',
+        '長野県': 'nagano',
+        '山梨県': 'yamanashi',
+        '富山県': 'toyama',
+        '石川県': 'ishikawa',
+        '福井県': 'fukui',
+        '三重県': 'mie',
+        '滋賀県': 'shiga',
+        '奈良県': 'nara',
+        '和歌山県': 'wakayama',
+        '鳥取県': 'tottori',
+        '島根県': 'shimane',
+        '岡山県': 'okayama',
+        '山口県': 'yamaguchi',
+        '徳島県': 'tokushima',
+        '香川県': 'kagawa',
+        '愛媛県': 'ehime',
+        '高知県': 'kochi',
+        '福岡県': 'fukuoka',
+        '佐賀県': 'saga',
+        '長崎県': 'nagasaki',
+        '熊本県': 'kumamoto',
+        '大分県': 'oita',
+        '宮崎県': 'miyazaki',
+        '鹿児島県': 'kagoshima',
+        '沖縄県': 'okinawa',
+    }
+    
+    city_map = {
+        '北九州市': 'kitakyushushi',
+        '福岡市': 'fukuokashi',
+        '札幌市': 'sapporoshi',
+        '仙台市': 'sendaishi',
+        '千葉市': 'chibashi',
+        '横浜市': 'yokohamashi',
+        '川崎市': 'kawasakishi',
+        '名古屋市': 'nagoyashi',
+        '京都市': 'kyotoshi',
+        '大阪市': 'osakashi',
+        '堺市': 'sakaishi',
+        '神戸市': 'kobeshi',
+        '広島市': 'hiroshimashi',
+        '北九州市': 'kitakyushushi',
+        '福岡市': 'fukuokashi',
+    }
+    
+    # Convert prefecture and city to English
+    prefecture_en = prefecture_map.get(prefecture, prefecture.replace('県', '').replace('府', '').replace('都', '').replace('道', ''))
+    
+    # For cities, use mapping if available, otherwise use romanization fallback
+    if city in city_map:
+        city_en = city_map[city]
+    else:
+        # Simple romanization for unmapped cities
+        city_clean = city.replace('市', '').replace('町', '').replace('村', '').replace('区', '')
+        # Convert common kanji to romaji (basic mapping)
+        city_clean = city_clean.replace('東', 'higashi').replace('西', 'nishi').replace('南', 'minami').replace('北', 'kita')
+        city_clean = city_clean.replace('中', 'naka').replace('上', 'kami').replace('下', 'shimo')
+        city_clean = city_clean.replace('新', 'shin').replace('古', 'ko').replace('大', 'dai')
+        city_clean = city_clean.replace('小', 'ko').replace('山', 'yama').replace('川', 'kawa')
+        city_clean = city_clean.replace('田', 'ta').replace('本', 'hon').replace('原', 'hara')
+        city_clean = city_clean.replace('島', 'shima').replace('崎', 'saki').replace('浜', 'hama')
+        city_clean = city_clean.replace('野', 'no').replace('谷', 'tani').replace('丘', 'oka')
+        
+        if city.endswith('市'):
+            city_en = city_clean + 'shi'
+        elif city.endswith('町'):
+            city_en = city_clean + 'cho'
+        elif city.endswith('村'):
+            city_en = city_clean + 'mura'
+        elif city.endswith('区'):
+            city_en = city_clean + 'ku'
+        else:
+            city_en = city_clean
+    
+    return f"{prefecture_en}_{city_en}"
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -46,7 +148,8 @@ class DisasterWarningsSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._attr_name = f"{config_entry.data['prefecture']} {config_entry.data['city']} {ENTITY_NAME_WARNING}"
-        self._attr_unique_id = f"{config_entry.entry_id}_warnings"
+        entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
+        self._attr_unique_id = f"{entity_prefix}_warnings_summary"
 
     @property
     def state(self) -> str:
@@ -144,7 +247,8 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._attr_name = f"{ENTITY_NAME_EARTHQUAKE}"
-        self._attr_unique_id = f"{config_entry.entry_id}_earthquake"
+        entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
+        self._attr_unique_id = f"{entity_prefix}_earthquake"
 
     @property
     def state(self) -> str:
