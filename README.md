@@ -142,7 +142,7 @@ A Home Assistant custom integration that provides real-time disaster information
 
 ### 2. 地震情報エンティティ（全国対象）
 
-#### 地震情報センサー (`sensor.[地域名英語]_earthquake`)
+#### 地震情報センサー (`sensor.earthquake`)
 - **状態**: フィルタ条件に該当する地震数（例：「3件の地震」、「該当する地震なし」）
 - **主要属性**:
   - `recent_earthquakes`: **直近10件の地震情報**
@@ -153,6 +153,11 @@ A Home Assistant custom integration that provides real-time disaster information
   - `earthquake_count`: フィルタ条件に該当する地震数
   - `time_range_hours`: 検索時間範囲（時間）
   - `min_magnitude`: 最小マグニチュード
+
+**対応するバイナリセンサー**:
+- 地震検知: `binary_sensor.earthquake_detected`
+
+**注意**: 地震情報は全国対象のため、地域名は含まれません。
 
 ## ダッシュボードカード
 
@@ -230,7 +235,7 @@ card:
     {% endif %}
 
 
-    {% set earthquakes = state_attr('sensor.fukuoka_kitakyushu_earthquake', 'recent_earthquakes') %}
+    {% set earthquakes = state_attr('sensor.earthquake', 'recent_earthquakes') %}
     {% if earthquakes %}
       {% set ns = namespace(recent_eq=[]) %}
       {% for eq in earthquakes %}
@@ -304,7 +309,7 @@ cards:
   - type: markdown
     title: 📊 最新10件の地震情報
     content: >
-      {% set earthquakes = state_attr('sensor.fukuoka_kitakyushu_earthquake',
+      {% set earthquakes = state_attr('sensor.earthquake',
       'recent_earthquakes') %}
 
       {% if earthquakes %}

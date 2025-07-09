@@ -146,8 +146,7 @@ class DisasterEarthquakeSensor(CoordinatorEntity, SensorEntity):
         super().__init__(coordinator)
         self._config_entry = config_entry
         self._attr_name = f"{ENTITY_NAME_EARTHQUAKE}"
-        entity_prefix = get_entity_prefix(config_entry.data.get('prefecture', ''), config_entry.data.get('city', ''))
-        self._attr_unique_id = f"{entity_prefix}_earthquake"
+        self._attr_unique_id = "earthquake"
 
     @property
     def state(self) -> str:
